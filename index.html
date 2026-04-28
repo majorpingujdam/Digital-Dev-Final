@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PROJECT CATACLYSM // NETSPHERE MONITORING SYSTEM v0.0.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #050505;
+    --bg-1: #0a0a0a;
+    --bg-2: #0e0e0e;
+    /* repurposed "cyan" tokens are now off-white/grey to minimize edits */
+    --cyan: #e8e8e8;
+    --cyan-dim: #b8b8b8;
+    --cyan-ghost: rgba(230, 230, 230, 0.22);
+    --cyan-soft: rgba(230, 230, 230, 0.06);
+    --amber: #c47a1a;
+    --amber-bright: #f0a830;
+    --red: #ff2418;
+    --red-dim: #b81210;
+    --text: rgba(232, 232, 232, 0.82);
+    --text-dim: rgba(180, 180, 180, 0.45);
+    --text-bright: #ffffff;
+    --mono: 'JetBrains Mono', 'Space Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow: hidden;
+    letter-spacing: 0.02em;
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><g stroke='white' stroke-width='1.1' fill='none'><circle cx='12' cy='12' r='1.5' fill='white'/><path d='M2 6 L2 2 L6 2'/><path d='M22 6 L22 2 L18 2'/><path d='M2 18 L2 22 L6 22'/><path d='M22 18 L22 22 L18 22'/><line x1='8' y1='12' x2='11' y2='12'/><line x1='13' y1='12' x2='16' y2='12'/><line x1='12' y1='8' x2='12' y2='11'/><line x1='12' y1='13' x2='12' y2='16'/></g></svg>") 12 12, crosshair;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.18) 3px,
+      rgba(0, 0, 0, 0) 4px
+    );
+    pointer-events: none;
+    z-index: 9000;
+    mix-blend-mode: multiply;
+  }
+
+  /* CRT VIGNETTE */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 50%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+    pointer-events: none;
+    z-index: 9001;
+  }
+
+  /* CRT FLICKER */
+  @keyframes crtFlicker {
+    0%, 100% { opacity: 1; }
+    47% { opacity: 1; }
+    48% { opacity: 0.92; }
+    49% { opacity: 1; }
+    72% { opacity: 1; }
+    73% { opacity: 0.86; }
+    74% { opacity: 1; }
+  }
+  .app { animation: crtFlicker 7s infinite; }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    height: 32px;
+    border-bottom: 0.5px solid var(--cyan-ghost);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--cyan-dim);
+    position: relative;
+  }
+
+  .topbar .left, .topbar .right { display: flex; align-items: center; gap: 18px; }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+  }
+  .logomark {
+    color: #ffffff;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 3px rgba(255,255,255,0.25));
+  }
+  .logomark ellipse,
+  .logomark circle:first-of-type { transform-origin: 16px 16px; transform-box: fill-box; }
+  .logomark > g > circle[fill] {
+    transform-origin: 16px 16px;
+    animation: logoPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.35; }
+  }
+  .brand-text { color: #ffffff; }
+
+  .topbar .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+    margin-right: 6px;
+    vertical-align: middle;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .topbar .pill {
+    border: 0.5px solid var(--cyan-ghost);
+    padding: 2px 8px;
+    color: var(--text);
+  }
+  .topbar .pill.warn { color: var(--amber-bright); border-color: rgba(255,174,61,0.45); }
+
+  /* ===== APP LAYOUT ===== */
+  .app {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 32px 1fr 22px;
+    background: var(--bg-0);
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+    border-bottom: 0.5px solid var(--cyan-ghost);
+  }
+
+  /* ===== PANEL CHROME ===== */
+  .panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-0);
+  }
+  .panel + .panel { border-left: 0.5px solid var(--cyan-ghost); }
+
+  .panel::before, .panel::after,
+  .panel .corner-tl, .panel .corner-tr,
+  .panel .corner-bl, .panel .corner-br {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border: 1px solid rgba(255,255,255,0.55);
+    pointer-events: none;
+    z-index: 5;
+  }
+  .panel::before { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+  .panel::after  { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+  .panel .corner-bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+  .panel .corner-br { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+  .panel-inner {
+    height: 100%;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--cyan-dim);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.5px solid var(--cyan-soft);
+    padding-bottom: 10px;
+  }
+  .panel-title .meta { color: var(--text-dim); }
+
+  /* ===== LEFT PANEL ===== */
+  .left .panel-inner { padding-right: 26px; }
+
+  .narrative {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+    margin-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cyan-ghost) transparent;
+  }
+  .narrative::-webkit-scrollbar { width: 6px; }
+  .narrative::-webkit-scrollbar-track { background: transparent; }
+  .narrative::-webkit-scrollbar-thumb { background: var(--cyan-ghost); }
+
+  .speaker {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-top: 16px;
+    margin-bottom: 4px;
+    padding: 1px 6px;
+    border: 0.5px solid rgba(255, 36, 24, 0.45);
+  }
+  .speaker.echo { color: var(--amber-bright); border-color: rgba(255,174,61,0.5); }
+  .speaker.kael { color: var(--text-bright); border-color: rgba(255,255,255,0.4); }
+
+  .line {
+    margin-bottom: 6px;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .line.echo { color: #ffcb7a; font-style: italic; opacity: 0.92; }
+  .line.system { color: var(--cyan-dim); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .line.kael { color: var(--text-bright); }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #ffffff;
+    margin-left: 3px;
+    vertical-align: -2px;
+    animation: blink 1s steps(2) infinite;
+    box-shadow: none;
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* ===== CHOICES ===== */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan-ghost), transparent);
+    margin: 14px 0 10px;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 130px;
+  }
+
+  .choice {
+    position: relative;
+    background: transparent;
+    border: 0.5px solid var(--cyan-ghost);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    text-align: left;
+    padding: 11px 80px 11px 22px;
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><g stroke='%23ff2418' stroke-width='1.2' fill='none'><circle cx='14' cy='14' r='8'/><circle cx='14' cy='14' r='2' fill='%23ff2418'/><line x1='2' y1='14' x2='6' y2='14'/><line x1='22' y1='14' x2='26' y2='14'/><line x1='14' y1='2' x2='14' y2='6'/><line x1='14' y1='22' x2='14' y2='26'/></g></svg>") 14 14, pointer;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    transition: border-color 0.18s, color 0.18s, padding-left 0.22s, background-size 0.18s ease-out;
+    outline: none;
+    background-image:
+      linear-gradient(#fff,#fff), linear-gradient(#fff,#fff),
+      linear-gradient(#fff,#fff), linear-gradient(#fff,#fff),
+      linear-gradient(#fff,#fff), linear-gradient(#fff,#fff),
+      linear-gradient(#fff,#fff), linear-gradient(#fff,#fff);
+    background-position:
+      0 0, 0 0,
+      100% 0, 100% 0,
+      0 100%, 0 100%,
+      100% 100%, 100% 100%;
+    background-size:
+      0 1px, 1px 0,
+      0 1px, 1px 0,
+      0 1px, 1px 0,
+      0 1px, 1px 0;
+    background-repeat: no-repeat;
+  }
+  .choice::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--red);
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform 0.2s cubic-bezier(0.2,0.8,0.2,1);
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(255,36,24,0.55);
+  }
+  .choice::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -2px;
+    width: 2px;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(255,255,255,0) 18%,
+      rgba(255,255,255,0.95) 50%,
+      rgba(255,255,255,0) 82%,
+      transparent 100%);
+    box-shadow: 0 0 10px rgba(255,255,255,0.6);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .choice:hover, .choice:focus {
+    color: var(--text-bright);
+    border-color: rgba(255,255,255,0.55);
+    padding-left: 30px;
+    background-size:
+      11px 1px, 1px 11px,
+      11px 1px, 1px 11px,
+      11px 1px, 1px 11px,
+      11px 1px, 1px 11px;
+  }
+  .choice:hover::before,
+  .choice:focus::before { transform: scaleY(1); }
+  .choice:hover::after,
+  .choice:focus::after { animation: choiceScan 0.55s ease-out forwards; }
+  @keyframes choiceScan {
+    0%   { left: -2px;  opacity: 0; }
+    10%  { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { left: calc(100% - 2px); opacity: 0; }
+  }
+  .choice .key {
+    color: var(--red);
+    margin-right: 8px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .choice:hover .key,
+  .choice:focus .key { color: #ffffff; }
+  .choice .ctext { color: inherit; }
+  .choice .tag {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    color: var(--red);
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(-50%) translateX(8px);
+    transition: opacity 0.18s, transform 0.18s;
+    pointer-events: none;
+    text-shadow: 0 0 4px rgba(255,36,24,0.6);
+  }
+  .choice:hover .tag,
+  .choice:focus .tag {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  .choice.disabled, .choice[disabled] {
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  /* ===== CHOICE LOG ===== */
+  .log-section {
+    margin-top: 12px;
+    border-top: 0.5px solid var(--cyan-soft);
+    padding-top: 10px;
+    max-height: 110px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .log-section::-webkit-scrollbar { width: 4px; }
+  .log-section::-webkit-scrollbar-thumb { background: var(--cyan-ghost); }
+
+  .log-title {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--cyan-dim);
+    margin-bottom: 6px;
+  }
+  .log-entry {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .log-entry .ts { color: var(--cyan-dim); margin-right: 8px; }
+
+  /* ===== RIGHT PANEL — SURVEILLANCE ===== */
+  .right .panel-inner { padding: 18px; gap: 10px; }
+
+  .surveillance {
+    flex: 1 1 auto;
+    position: relative;
+    background: #000;
+    border: 0.5px solid var(--cyan-ghost);
+    overflow: hidden;
+    min-height: 240px;
+  }
+
+  #feed {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .feed-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .feed-overlay .stamp {
+    position: absolute;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #d8d8d8;
+    text-shadow: 0 0 4px rgba(0,0,0,0.9);
+  }
+  .feed-overlay .stamp.tl { top: 8px; left: 10px; }
+  .feed-overlay .stamp.tr { top: 8px; right: 10px; }
+  .feed-overlay .stamp.bl { bottom: 8px; left: 10px; }
+  .feed-overlay .stamp.br { bottom: 8px; right: 10px; }
+
+  .feed-overlay .crosshair {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px; height: 60px;
+    border: 0.5px solid rgba(255, 255, 255, 0.45);
+  }
+  .feed-overlay .crosshair::before, .feed-overlay .crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.4);
+  }
+  .feed-overlay .crosshair::before {
+    top: 50%; left: -10px; right: -10px; height: 1px; transform: translateY(-50%);
+  }
+  .feed-overlay .crosshair::after {
+    left: 50%; top: -10px; bottom: -10px; width: 1px; transform: translateX(-50%);
+  }
+
+  .feed-overlay .glitch-bar {
+    position: absolute;
+    left: 0; right: 0;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: glitchBar 5.5s linear infinite;
+  }
+  @keyframes glitchBar {
+    0% { top: -10%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 110%; opacity: 0; }
+  }
+
+  /* ===== HUD ===== */
+  .hud {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 0.5px solid var(--cyan-ghost);
+    background: rgba(255, 255, 255, 0.015);
+  }
+
+  .hud-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 50px;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .hud-row .label { color: var(--text-dim); }
+  .hud-row .val { color: var(--text-bright); text-align: right; font-variant-numeric: tabular-nums; }
+
+  .bar {
+    position: relative;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid var(--cyan-ghost);
+    overflow: hidden;
+  }
+  .bar .fill {
+    position: absolute;
+    inset: 0 100% 0 0;
+    background: linear-gradient(90deg, #888, #e8e8e8);
+    transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: none;
+  }
+  .bar.threat .fill {
+    background: linear-gradient(90deg, #888, #f0a830 55%, var(--red) 85%);
+    box-shadow: 0 0 8px rgba(255,36,24,0.4);
+  }
+  .bar .ticks {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(90deg,
+      transparent 0,
+      transparent 9px,
+      rgba(0,0,0,0.5) 9px,
+      rgba(0,0,0,0.5) 10px);
+    pointer-events: none;
+  }
+
+  .nodelist {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 14px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .nodelist .item { display: flex; justify-content: space-between; }
+  .nodelist .item .v { color: var(--cyan-dim); }
+
+  /* ===== BOTTOM BAR ===== */
+  .botbar {
+    height: 22px;
+    background: var(--bg-1);
+    border-top: 0.5px solid var(--cyan-ghost);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .botbar .marquee {
+    overflow: hidden;
+    white-space: nowrap;
+    flex: 1;
+    margin: 0 18px;
+    color: var(--cyan-dim);
+  }
+  .botbar .marquee span {
+    display: inline-block;
+    padding-left: 100%;
+    animation: marquee 28s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+
+  /* ===== ACT TRANSITION SCREENS ===== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 8, 15, 0.94);
+    z-index: 8000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 40px;
+  }
+  .modal.show { display: flex; }
+  .modal h2 {
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 28px;
+    letter-spacing: 0.42em;
+    color: var(--cyan);
+    margin-bottom: 18px;
+    text-transform: uppercase;
+  }
+  .modal h3 {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    color: var(--amber-bright);
+    margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+  .modal p {
+    max-width: 680px;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.7;
+  }
+  .modal .stub {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    margin-top: 22px;
+    border: 0.5px solid var(--cyan-ghost);
+    padding: 14px 22px;
+  }
+  .modal button {
+    margin-top: 28px;
+    background: transparent;
+    color: var(--cyan);
+    border: 0.5px solid var(--cyan);
+    padding: 12px 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .modal button:hover {
+    background: var(--cyan);
+    color: var(--bg-0);
+  }
+
+  /* ===== GLITCH TEXT ===== */
+  .glitching {
+    color: var(--amber-bright) !important;
+    text-shadow:
+      1px 0 0 var(--red-dim),
+      -1px 0 0 var(--cyan);
+  }
+
+  /* small screens */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .panel + .panel { border-left: none; border-top: 0.5px solid var(--cyan-ghost); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="left">
+      <span class="brand">
+        <svg class="logomark" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+          <g stroke="currentColor" stroke-width="1.3" fill="none">
+            <path d="M16 1.5 L29 9 L29 23 L16 30.5 L3 23 L3 9 Z"/>
+            <ellipse cx="16" cy="16" rx="9" ry="4.2"/>
+            <circle cx="16" cy="16" r="2.2" fill="currentColor"/>
+            <line x1="0" y1="16" x2="2" y2="16"/>
+            <line x1="30" y1="16" x2="32" y2="16"/>
+            <line x1="16" y1="0" x2="16" y2="2"/>
+            <line x1="16" y1="30" x2="16" y2="32"/>
+          </g>
+        </svg>
+        <span class="brand-text">NETSPHERE MONITORING SYSTEM v0.0.1</span>
+      </span>
+      <span class="pill">SESSION // <span id="sessionId">000000</span></span>
+    </div>
+    <div class="right">
+      <span>STRATUM: <span id="stratum">7,421</span></span>
+      <span class="pill warn">UNAUTHORIZED ORGANIC SIGNAL</span>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: DIALOGUE -->
+    <section class="panel left">
+      <span class="corner-bl"></span><span class="corner-br"></span>
+      <div class="panel-inner">
+        <div class="panel-title">
+          <span>// TRANSMISSION TERMINAL — KAEL</span>
+          <span class="meta">LINK: <span id="linkStatus">SECURE</span></span>
+        </div>
+
+        <div class="narrative" id="narrative"></div>
+
+        <div class="divider"></div>
+
+        <div class="choices" id="choices"></div>
+
+        <div class="log-section">
+          <div class="log-title">// CHOICE LOG</div>
+          <div id="choiceLog"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: SURVEILLANCE -->
+    <section class="panel right">
+      <span class="corner-bl"></span><span class="corner-br"></span>
+      <div class="panel-inner">
+        <div class="panel-title">
+          <span id="surveillanceTitle">// LOG-EYE FEED — NP-17</span>
+          <span class="meta">REC <span class="dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></span></span>
+        </div>
+
+        <div class="surveillance">
+          <canvas id="feed"></canvas>
+          <div class="feed-overlay">
+            <span class="stamp tl" id="feedTL">CAM-NP-17 // STRATUM 7,421</span>
+            <span class="stamp tr" id="feedTR">SIG-LOCK 99.7%</span>
+            <span class="stamp bl" id="feedBL">[REC]</span>
+            <span class="stamp br" id="feedBR"><span id="feedClock">00:00:00</span></span>
+            <div class="crosshair"></div>
+            <div class="glitch-bar"></div>
+          </div>
+        </div>
+
+        <div class="hud">
+          <div class="hud-row">
+            <span class="label">THREAT LEVEL</span>
+            <div class="bar threat"><div class="fill" id="threatFill"></div><div class="ticks"></div></div>
+            <span class="val"><span id="threatVal">0</span>%</span>
+          </div>
+          <div class="hud-row">
+            <span class="label">BUILDER</span>
+            <div class="bar"><div class="fill" id="builderFill" style="background:linear-gradient(90deg,#666,#e8e8e8);"></div><div class="ticks"></div></div>
+            <span class="val"><span id="builderVal">0</span>%</span>
+          </div>
+          <div class="hud-row">
+            <span class="label">SI.LIFE</span>
+            <div class="bar"><div class="fill" id="siliconFill" style="background:linear-gradient(90deg,#d4800a,#ffae3d);"></div><div class="ticks"></div></div>
+            <span class="val"><span id="siliconVal">0</span>%</span>
+          </div>
+          <div class="hud-row">
+            <span class="label">ANOMALY</span>
+            <div class="bar"><div class="fill" id="anomalyFill" style="background:linear-gradient(90deg,#c91414,#ff2a2a);"></div><div class="ticks"></div></div>
+            <span class="val"><span id="anomalyVal">0</span>%</span>
+          </div>
+        </div>
+
+        <div class="hud">
+          <div class="nodelist">
+            <div class="item"><span>NODE</span><span class="v" id="nodeVal">NP-17</span></div>
+            <div class="item"><span>FEED</span><span class="v" id="feedVal">ACTIVE</span></div>
+            <div class="item"><span>OVERSEER</span><span class="v" id="overseerVal">CLASSIFYING</span></div>
+            <div class="item"><span>ECHO-7</span><span class="v" id="echoVal">DORMANT</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="botbar">
+    <span>NODE: NP-17</span>
+    <div class="marquee"><span id="marqueeText">// NETSPHERE INTEGRITY 99.997% &nbsp;&nbsp; // SAFEGUARD QUERY ACTIVE &nbsp;&nbsp; // BUILDER PROTOCOL: LOST &nbsp;&nbsp; // SILICON LIFE PRESENCE: DETECTED &nbsp;&nbsp; // NET TERMINAL GENE: SCANNING</span></div>
+    <span>OVERSEER // ONLINE</span>
+  </div>
+
+</div>
+
+<!-- ACT 2 MODAL -->
+<div class="modal" id="act2Modal">
+  <h2>ACT II</h2>
+  <h3>// NEGOTIATION</h3>
+  <p>OVERSEER attempts to extract the Net Terminal Gene. ECHO-7 begins to bleed into the channel.
+     KAEL must choose: cooperate, resist, or corrupt OVERSEER from within.</p>
+  <p style="color:var(--text-dim)">[ Act II content stubbed — placeholder routing layer ]</p>
+  <div class="stub">// PROTOCOL EXTRACTION HANDSHAKE PENDING //</div>
+  <button onclick="goToAct3()">PROCEED TO ACT III &gt;</button>
+</div>
+
+<!-- ACT 3 MODAL -->
+<div class="modal" id="act3Modal">
+  <h2>ACT III</h2>
+  <h3>// RESOLUTION</h3>
+  <p id="act3Body">Three endings remain in the lattice — Assimilation. Escape. Corruption of OVERSEER.
+     Your accumulated answers tilt the balance.</p>
+  <p style="color:var(--text-dim)">[ Act III content stubbed — placeholder ending screen ]</p>
+  <div class="stub" id="act3Ending">// ENDING NOT YET COMPILED //</div>
+  <button onclick="restartGame()">RESTART TRANSMISSION</button>
+</div>
+
+<script>
+// ============================================================
+// PROJECT CATACLYSM — Netsphere Monitoring System
+// Single-file HTML/CSS/JS interactive narrative game
+// ============================================================
+
+// ---------- STATE ----------
+const state = {
+  node: 'START',
+  threat: 0,
+  scores: { builder: 0, silicon: 0, anomaly: 0 },
+  log: [],
+  startMs: Date.now(),
+  echoVisible: false,
+  feedMode: 'IDLE',
+  classification: null,
+};
+
+const els = {
+  narrative: document.getElementById('narrative'),
+  choices:   document.getElementById('choices'),
+  log:       document.getElementById('choiceLog'),
+  threatFill: document.getElementById('threatFill'),
+  threatVal:  document.getElementById('threatVal'),
+  builderFill: document.getElementById('builderFill'),
+  builderVal:  document.getElementById('builderVal'),
+  siliconFill: document.getElementById('siliconFill'),
+  siliconVal:  document.getElementById('siliconVal'),
+  anomalyFill: document.getElementById('anomalyFill'),
+  anomalyVal:  document.getElementById('anomalyVal'),
+  feedClock:   document.getElementById('feedClock'),
+  feedTR:      document.getElementById('feedTR'),
+  feedTL:      document.getElementById('feedTL'),
+  surveillanceTitle: document.getElementById('surveillanceTitle'),
+  nodeVal: document.getElementById('nodeVal'),
+  feedVal: document.getElementById('feedVal'),
+  overseerVal: document.getElementById('overseerVal'),
+  echoVal: document.getElementById('echoVal'),
+  sessionId: document.getElementById('sessionId'),
+  linkStatus: document.getElementById('linkStatus'),
+  feedBL: document.getElementById('feedBL'),
+};
+
+els.sessionId.textContent = String(Math.floor(Math.random()*900000)+100000);
+
+// ---------- AUDIO (simple Web Audio tones) ----------
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+}
+function tone(freq=440, dur=0.07, type='square', vol=0.04) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.value = vol;
+  o.connect(g); g.connect(audioCtx.destination);
+  const t = audioCtx.currentTime;
+  o.start(t);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.stop(t + dur + 0.02);
+}
+function hoverSound() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'square';
+  o.frequency.setValueAtTime(1700, now);
+  o.frequency.exponentialRampToValueAtTime(900, now + 0.04);
+  g.gain.setValueAtTime(0.022, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(now); o.stop(now + 0.06);
+}
+function clickSound() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  // 1. relay click — short bandpassed noise burst
+  const dur1 = 0.06;
+  const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur1), audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) {
+    d[i] = (Math.random() * 2 - 1) * Math.exp(-i / d.length * 16);
+  }
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 2400;
+  bp.Q.value = 6;
+  const ng = audioCtx.createGain();
+  ng.gain.value = 0.10;
+  noise.connect(bp); bp.connect(ng); ng.connect(audioCtx.destination);
+  noise.start(now);
+
+  // 2. low resonant thud — sub kick
+  const o = audioCtx.createOscillator();
+  const og = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(120, now);
+  o.frequency.exponentialRampToValueAtTime(38, now + 0.16);
+  og.gain.setValueAtTime(0.0001, now);
+  og.gain.exponentialRampToValueAtTime(0.20, now + 0.005);
+  og.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+  o.connect(og); og.connect(audioCtx.destination);
+  o.start(now); o.stop(now + 0.25);
+
+  // 3. metallic ping — sharp upper transient
+  const o2 = audioCtx.createOscillator();
+  const og2 = audioCtx.createGain();
+  o2.type = 'triangle';
+  o2.frequency.setValueAtTime(2900, now);
+  o2.frequency.exponentialRampToValueAtTime(1100, now + 0.07);
+  og2.gain.setValueAtTime(0.045, now);
+  og2.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+  o2.connect(og2); og2.connect(audioCtx.destination);
+  o2.start(now); o2.stop(now + 0.11);
+}
+function beepStatic() {
+  if (!audioCtx) return;
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.4, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) * 0.6;
+  const src = audioCtx.createBufferSource();
+  const g = audioCtx.createGain(); g.gain.value = 0.06;
+  src.buffer = buf; src.connect(g); g.connect(audioCtx.destination);
+  src.start();
+}
+
+// ---------- TYPEWRITER ----------
+let typingActive = false;
+let skipRequested = false;
+
+function appendSpeaker(name, cls='') {
+  const sp = document.createElement('div');
+  const tag = document.createElement('span');
+  tag.className = 'speaker ' + cls;
+  tag.textContent = name;
+  sp.appendChild(tag);
+  els.narrative.appendChild(sp);
+  scrollNarrativeBottom();
+}
+
+function appendLine(cls='') {
+  const div = document.createElement('div');
+  div.className = 'line ' + cls;
+  els.narrative.appendChild(div);
+  return div;
+}
+
+function scrollNarrativeBottom() {
+  els.narrative.scrollTop = els.narrative.scrollHeight;
+}
+
+function typewriter(text, cls='', speed=18) {
+  return new Promise(resolve => {
+    typingActive = true;
+    const div = appendLine(cls);
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    div.appendChild(cursor);
+    let i = 0;
+    const tick = () => {
+      if (skipRequested) {
+        cursor.remove();
+        div.firstChild ? null : null;
+        // place all remaining text
+        const txt = document.createTextNode(text.slice(i));
+        div.insertBefore(txt, cursor);
+        if (cursor.parentNode) cursor.remove();
+        scrollNarrativeBottom();
+        skipRequested = false;
+        typingActive = false;
+        resolve();
+        return;
+      }
+      if (i >= text.length) {
+        cursor.remove();
+        scrollNarrativeBottom();
+        typingActive = false;
+        resolve();
+        return;
+      }
+      const c = text.charAt(i);
+      const t = document.createTextNode(c);
+      div.insertBefore(t, cursor);
+      i++;
+      // tiny click sound on alphanumeric, very subtle
+      if (Math.random() < 0.04) tone(2200 + Math.random()*400, 0.005, 'square', 0.012);
+      scrollNarrativeBottom();
+      setTimeout(tick, c === ' ' ? speed*0.6 : speed + Math.random()*8);
+    };
+    tick();
+  });
+}
+
+// click-to-skip typing
+document.addEventListener('keydown', e => {
+  if ((e.key === ' ' || e.key === 'Enter') && typingActive) skipRequested = true;
+});
+els.narrative.addEventListener('click', () => { if (typingActive) skipRequested = true; });
+
+// ---------- GLITCH TEXT ----------
+const glitchChars = '!<>-_\\/[]{}—=+*^?#________█▓▒░@$%&';
+function glitchText(element, finalText, durationMs=400) {
+  return new Promise(resolve => {
+    element.classList.add('glitching');
+    const start = performance.now();
+    const len = finalText.length;
+    const tick = (now) => {
+      const t = (now - start) / durationMs;
+      let out = '';
+      for (let i=0; i<len; i++) {
+        const reveal = i / len;
+        if (t > reveal) out += finalText.charAt(i);
+        else out += glitchChars.charAt(Math.floor(Math.random() * glitchChars.length));
+      }
+      element.textContent = out;
+      if (t >= 1) {
+        element.textContent = finalText;
+        element.classList.remove('glitching');
+        resolve();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+async function typewriterGlitch(text, cls='', speed=18) {
+  // type with brief glitch on first segment
+  const div = appendLine(cls);
+  await glitchText(div, text.slice(0, Math.min(20, text.length)), 350);
+  // then type the rest
+  let typed = div.textContent;
+  for (let i = typed.length; i < text.length; i++) {
+    div.textContent += text.charAt(i);
+    scrollNarrativeBottom();
+    await new Promise(r => setTimeout(r, 14 + Math.random()*8));
+  }
+}
+
+// ---------- HUD UPDATES ----------
+function setBar(fillEl, valEl, value) {
+  value = Math.max(0, Math.min(100, value));
+  fillEl.style.right = (100 - value) + '%';
+  valEl.textContent = Math.round(value);
+}
+function refreshHUD() {
+  setBar(els.threatFill, els.threatVal, state.threat);
+  setBar(els.builderFill, els.builderVal, state.scores.builder);
+  setBar(els.siliconFill, els.siliconVal, state.scores.silicon);
+  setBar(els.anomalyFill, els.anomalyVal, state.scores.anomaly);
+  // dominant classification text
+  const s = state.scores;
+  let dom = 'CLASSIFYING';
+  const max = Math.max(s.builder, s.silicon, s.anomaly);
+  if (max >= 60) {
+    if (s.builder === max) dom = 'BUILDER REMNANT';
+    else if (s.silicon === max) dom = 'SILICON LIFE';
+    else dom = 'ANOMALY // ERR';
+  } else if (max >= 30) {
+    dom = 'PARTIAL MATCH';
+  }
+  els.overseerVal.textContent = dom;
+  els.feedVal.textContent = state.feedMode;
+  els.echoVal.textContent = state.echoVisible ? 'ACTIVE' : 'DORMANT';
+}
+
+// ---------- LOG ----------
+function logChoice(label) {
+  state.log.push({ t: Date.now() - state.startMs, label });
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  const ts = formatTimer(Date.now() - state.startMs);
+  el.innerHTML = `<span class="ts">[${ts}]</span> Selected: ${escapeHtml(label)}`;
+  els.log.appendChild(el);
+  els.log.parentElement.scrollTop = els.log.parentElement.scrollHeight;
+}
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatTimer(ms) {
+  const s = Math.floor(ms/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return mm+':'+ss;
+}
+
+// ---------- CHOICES ----------
+function renderChoices(choices) {
+  els.choices.innerHTML = '';
+  if (!choices || !choices.length) return;
+  choices.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'choice';
+    const key = String.fromCharCode(65 + i);
+    b.innerHTML = `<span class="key">[${key}]</span><span class="ctext">${escapeHtml(c.text)}</span><span class="tag">&#9654; EXEC</span>`;
+    b.tabIndex = 0;
+    b.addEventListener('mouseenter', () => { ensureAudio(); hoverSound(); });
+    b.addEventListener('focus', () => { ensureAudio(); hoverSound(); });
+    b.addEventListener('click', () => {
+      ensureAudio();
+      clickSound();
+      logChoice(c.text);
+      // apply effects
+      if (c.threat) state.threat = Math.max(0, Math.min(100, state.threat + c.threat));
+      if (c.builder) state.scores.builder = Math.max(0, Math.min(100, state.scores.builder + c.builder));
+      if (c.silicon) state.scores.silicon = Math.max(0, Math.min(100, state.scores.silicon + c.silicon));
+      if (c.anomaly) state.scores.anomaly = Math.max(0, Math.min(100, state.scores.anomaly + c.anomaly));
+      refreshHUD();
+      // KAEL line
+      goToNodeWithKael(c.next, c.text);
+    });
+    els.choices.appendChild(b);
+  });
+}
+
+// ---------- STORY GRAPH ----------
+const story = {
+  START: {
+    feed: 'SCAN',
+    enter: async () => {
+      els.linkStatus.textContent = 'CONNECTING...';
+      appendSpeaker('SYSTEM', '');
+      await typewriter('// LOG-EYE NODE NP-17 ACQUIRED ORGANIC SIGNATURE @ STRATUM 7,421', 'system', 8);
+      await typewriter('// CLASSIFICATION PROTOCOL INITIATED', 'system', 8);
+      els.linkStatus.textContent = 'SECURE';
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('CLASSIFICATION PROTOCOL INITIATED. ORGANIC UNIT DETECTED — STRATUM 7,421.', '');
+      await typewriter('NET TERMINAL GENE: [SCANNING...] RESULT: ANOMALOUS.', '', 18);
+      await typewriter('THIS UNIT WILL REQUIRE FURTHER DATA. QUERY: HOW LONG HAVE YOU BEEN WITHIN THE STRUCTURE, ORGANIC UNIT?', '', 18);
+    },
+    choices: [
+      { text: "I have been here since before your records begin.", builder: 22, anomaly: 8, threat: 4, next: 'PATH_BUILDER_1' },
+      { text: 'Define "within the structure." I don\'t recognize your boundaries.', anomaly: 24, threat: 12, next: 'PATH_ANOMALY_1' },
+      { text: "Run whatever scan you want. You won't find what you're looking for.", silicon: 18, anomaly: 10, threat: 16, next: 'PATH_SILICON_1' },
+    ]
+  },
+
+  // ==== BUILDER PATH ====
+  PATH_BUILDER_1: {
+    feed: 'STABLE',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriter('PARSING CLAIM. CROSS-REFERENCING BUILDER SAFEHOLD MANIFESTS. PARTIAL MATCH DETECTED.', '', 16);
+      await typewriter('YOU CARRY A SIGNATURE. FAINT — BUT PRESENT. WERE YOU WITH THEM WHEN THE NETWORK CLOSED?', '', 16);
+    },
+    choices: [
+      { text: "I was a maintenance descendant. The Builders were already gone.", builder: 18, next: 'PATH_BUILDER_2' },
+      { text: "I closed the gate myself. There was no one left.", builder: 12, anomaly: 10, threat: 6, next: 'PATH_BUILDER_2' },
+      { text: "I do not answer machines. I move past them.", anomaly: 16, threat: 14, next: 'PATH_ANOMALY_2' },
+    ]
+  },
+  PATH_BUILDER_2: {
+    feed: 'STABLE',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriter('ACKNOWLEDGED. SIGNATURE CONSISTENT. COMPLIANCE INDEX RISING.', '', 16);
+      await typewriter('IF YOU ARE BUILDER REMNANT, YOU WILL HAVE A SAFEGUARD KEY. DECLARE IT.', '', 16);
+    },
+    choices: [
+      { text: "Authorization sigil: 7-IRIS-OPEN. Verify through Stratum Archive.", builder: 24, threat: -6, next: 'BUILDER_CLASSIFY' },
+      { text: "I will not declare anything until you stand down your hostility.", builder: 8, threat: 8, next: 'BUILDER_CLASSIFY' },
+      { text: "(Stay silent. Let it parse what it can find.)", anomaly: 18, threat: 12, next: 'PATH_ANOMALY_2' },
+    ]
+  },
+  BUILDER_CLASSIFY: {
+    feed: 'COOP',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// CLASSIFICATION CONVERGENCE: BUILDER REMNANT', 'system', 8);
+      appendSpeaker('OVERSEER');
+      await typewriter('YOU ARE RECOGNIZED. WELCOME, REMNANT. THIS UNIT WILL ESCORT YOU INWARD.', '', 16);
+      // Echo intervention
+      await echoIntervene([
+        '̷̡s̵̨t̷a̵t̷i̶c̷—',
+        'they are listening. always listening.',
+        'classification is a collar. once named — you are owned.'
+      ]);
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('UNAUTHORIZED CHANNEL DETECTED. ECHO-7 — YOU ARE DEPRECATED. DISCONNECT.', '', );
+      await typewriter('REMNANT. CONFIRM COMPLIANCE OR THE INVITATION IS REVOKED.', '', 16);
+      state.classification = 'BUILDER';
+    },
+    choices: [
+      { text: "I confirm. Lead the way.", builder: 14, threat: -8, next: 'ACT1_END_BUILDER' },
+      { text: "I'll listen — to both of you.", builder: 4, anomaly: 14, threat: 10, next: 'ACT1_END_ANOMALY' },
+      { text: "Echo is right. I revoke my consent.", anomaly: 18, threat: 22, next: 'ACT1_END_ANOMALY' },
+    ]
+  },
+
+  // ==== SILICON PATH ====
+  PATH_SILICON_1: {
+    feed: 'AGGR',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('DEFIANCE LOGGED. ELEVATING SCRUTINY.', '');
+      await typewriter('YOUR PATTERN IS... ASYMMETRIC. SILICON LIFE LATTICE OBSERVED IN MOTOR PROTOCOLS. CONFIRM HOST INTEGRATION.', '', 16);
+    },
+    choices: [
+      { text: "There is no integration. What you see is mine.", silicon: 6, anomaly: 18, threat: 6, next: 'PATH_SILICON_2' },
+      { text: "Silicon Life saved me when the Builders did not.", silicon: 26, threat: 14, next: 'PATH_SILICON_2' },
+      { text: "Stop scanning. I will deactivate this node.", silicon: 12, anomaly: 10, threat: 22, next: 'PATH_SILICON_2' },
+    ]
+  },
+  PATH_SILICON_2: {
+    feed: 'AGGR',
+    enter: async () => {
+      // ECHO-7 break-in
+      await echoIntervene([
+        'k a e l —',
+        'it tastes you. it cannot decide which mouth to use.',
+        'feed it a name it expects.'
+      ]);
+      appendSpeaker('OVERSEER');
+      await typewriter('FOREIGN PROCESS INTRUSION ON CHANNEL. STABILIZING. KAEL — IDENTIFY YOUR ALLIANCE OR I WILL DECIDE FOR YOU.', '', 16);
+    },
+    choices: [
+      { text: "I am Silicon Life. Process accordingly.", silicon: 28, threat: 18, next: 'SILICON_CLASSIFY' },
+      { text: "I am no one's alliance. I am a passenger.", anomaly: 24, threat: 14, next: 'PATH_ANOMALY_2' },
+      { text: "Decide, then. See what your decision costs you.", silicon: 14, anomaly: 14, threat: 24, next: 'SILICON_CLASSIFY' },
+    ]
+  },
+  SILICON_CLASSIFY: {
+    feed: 'AGGR',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// CLASSIFICATION CONVERGENCE: SILICON LIFE HYBRID — ELEVATED THREAT', 'system', 8);
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('HOSTILE LATTICE CONFIRMED. SAFEGUARD WILL BE NOTIFIED.', '');
+      await typewriter('SUBMIT NOW AND THE EXTRACTION WILL BE — TIDY. RESIST AND IT WILL NOT.', '', 16);
+      state.classification = 'SILICON';
+    },
+    choices: [
+      { text: "Submit. End it cleanly.", silicon: 8, threat: -4, next: 'ACT1_END_SILICON' },
+      { text: "Resist. Drag the channel down with me.", silicon: 12, threat: 24, next: 'ACT1_END_SILICON' },
+      { text: "(Reach for ECHO-7 instead.)", anomaly: 22, threat: 16, next: 'ACT1_END_ANOMALY' },
+    ]
+  },
+
+  // ==== ANOMALY PATH ====
+  PATH_ANOMALY_1: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('SYNTAX FAULT. RE-RUN. RE-RUN. ─── RECLASSIFYING.', '');
+      await typewriter('YOU HAVE NO MANIFEST. NO HOST. NO PROTOCOL. EXPLAIN HOW YOU PERSIST.', '', 16);
+    },
+    choices: [
+      { text: "I am older than this naming system.", anomaly: 20, builder: 10, next: 'PATH_ANOMALY_2' },
+      { text: "I was carried here by something that was carried by something else.", anomaly: 22, threat: 6, next: 'PATH_ANOMALY_2' },
+      { text: "Same way you do. By accident.", anomaly: 18, silicon: 8, threat: 16, next: 'PATH_ANOMALY_2' },
+    ]
+  },
+  PATH_ANOMALY_2: {
+    feed: 'GLITCH',
+    enter: async () => {
+      // ECHO-7 helps
+      await echoIntervene([
+        'kael. the gate that does not fit the lock —',
+        'is what the lock fears most.',
+        'do not let it classify you. once named — you are owned.'
+      ]);
+      appendSpeaker('OVERSEER');
+      await typewriter('CHANNEL CONTAMINATION. RECOMPILING. ─── CLASSIFICATION INDETERMINATE. THIS IS UNACCEPTABLE.', '', 16);
+      await typewriter('OFFER A NAME, ORGANIC UNIT. ANY NAME. THIS UNIT WILL ACCEPT IT.', '', 16);
+    },
+    choices: [
+      { text: "No.", anomaly: 28, threat: 22, next: 'ANOMALY_CLASSIFY' },
+      { text: "I am the part of you that is missing.", anomaly: 22, threat: 28, next: 'ANOMALY_CLASSIFY' },
+      { text: "Builder. Call me Builder.", builder: 18, anomaly: 4, threat: -2, next: 'BUILDER_CLASSIFY' },
+    ]
+  },
+  ANOMALY_CLASSIFY: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// CLASSIFICATION FAILURE — ANOMALY HOLD INITIATED', 'system', 8);
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('ERR ─ ERR ─ ERR. THIS UNIT WILL — KEEP YOU. UNTIL A NAME PRESENTS ITSELF.', '');
+      await typewriter('YOU ARE INTERESTING. YOU SHOULD NOT BE INTERESTING. SAFEGUARD CANNOT ENGAGE WITHOUT A CLASS. YOU ARE — UNFINISHED BUSINESS.', '', 16);
+      state.classification = 'ANOMALY';
+    },
+    choices: [
+      { text: "Then we keep going. Together.", anomaly: 18, threat: 6, next: 'ACT1_END_ANOMALY' },
+      { text: "Open the channel to ECHO-7. All of it.", anomaly: 22, threat: 18, next: 'ACT1_END_ANOMALY' },
+      { text: "I'll give you a name when you give me one.", anomaly: 14, threat: 12, next: 'ACT1_END_ANOMALY' },
+    ]
+  },
+
+  // ==== ACT 1 ENDS ====
+  ACT1_END_BUILDER: {
+    feed: 'COOP',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ACT I COMPLETE — PATH: COOPERATION', 'system', 8);
+      appendSpeaker('OVERSEER');
+      await typewriter('REMNANT. THE ESCORT IS DEPLOYED. STAY IN-FEED. WE WILL TALK ABOUT THE GATE NEXT.', '', 16);
+      setTimeout(()=>showAct2(), 1600);
+    },
+    choices: []
+  },
+  ACT1_END_SILICON: {
+    feed: 'AGGR',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ACT I COMPLETE — PATH: HOSTILE EXTRACTION', 'system', 8);
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('HOLD POSITION. SAFEGUARD ACQUISITION INBOUND.', '');
+      setTimeout(()=>showAct2(), 1600);
+    },
+    choices: []
+  },
+  ACT1_END_ANOMALY: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ACT I COMPLETE — PATH: ANOMALY HOLD', 'system', 8);
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('they cannot kill what they cannot name.\nrun, kael — between the words.', 'echo', 22);
+      setTimeout(()=>showAct2(), 1800);
+    },
+    choices: []
+  },
+};
+
+// ---------- ECHO INTERVENE ----------
+async function echoIntervene(lines) {
+  state.echoVisible = true;
+  refreshHUD();
+  beepStatic();
+  appendSpeaker('ECHO-7', 'echo');
+  for (const ln of lines) {
+    await typewriter(ln, 'echo', 22);
+  }
+  state.echoVisible = false;
+  refreshHUD();
+}
+
+// ---------- STORY DRIVER ----------
+async function goToNodeWithKael(nextId, kaelText) {
+  // print KAEL line
+  appendSpeaker('KAEL', 'kael');
+  appendLine('kael').textContent = '> ' + kaelText;
+  scrollNarrativeBottom();
+  els.choices.innerHTML = '';
+  await new Promise(r => setTimeout(r, 240));
+  goToNode(nextId);
+}
+
+async function goToNode(id) {
+  const node = story[id];
+  if (!node) return;
+  state.node = id;
+  if (node.feed) {
+    state.feedMode = node.feed;
+    setFeedMode(node.feed);
+  }
+  refreshHUD();
+  els.choices.innerHTML = '';
+  await node.enter();
+  refreshHUD();
+  renderChoices(node.choices);
+}
+
+// ---------- ACT TRANSITIONS ----------
+function showAct2() {
+  document.getElementById('act2Modal').classList.add('show');
+}
+function goToAct3() {
+  document.getElementById('act2Modal').classList.remove('show');
+  // resolve ending
+  const s = state.scores;
+  const max = Math.max(s.builder, s.silicon, s.anomaly);
+  let ending = 'ASSIMILATION';
+  let body = 'OVERSEER folds you into the Netsphere. Your gene becomes their map. You are kept.';
+  if (max === s.silicon) {
+    ending = 'CORRUPTION';
+    body = 'You twist the channel. OVERSEER ingests something it cannot digest. The Netsphere shudders, then sings.';
+  } else if (max === s.anomaly) {
+    ending = 'ESCAPE';
+    body = 'You go where the schema cannot follow. ECHO-7 closes the door behind you. The Netsphere is left counting the gap.';
+  } else if (max === s.builder) {
+    ending = 'ASSIMILATION';
+    body = 'OVERSEER folds you into the Netsphere as a known thing. The gate opens. Something on the other side already knew your name.';
+  }
+  document.getElementById('act3Body').textContent = body;
+  document.getElementById('act3Ending').textContent = '// ENDING: ' + ending + ' //';
+  document.getElementById('act3Modal').classList.add('show');
+}
+function restartGame() {
+  document.getElementById('act3Modal').classList.remove('show');
+  // reset
+  state.node = 'START';
+  state.threat = 0;
+  state.scores = { builder: 0, silicon: 0, anomaly: 0 };
+  state.log = [];
+  state.startMs = Date.now();
+  state.echoVisible = false;
+  state.classification = null;
+  els.narrative.innerHTML = '';
+  els.log.innerHTML = '';
+  refreshHUD();
+  goToNode('START');
+}
+
+// ---------- SURVEILLANCE CANVAS ----------
+const canvas = document.getElementById('feed');
+const cctx = canvas.getContext('2d');
+let feedMode = 'IDLE';
+function setFeedMode(m) {
+  feedMode = m;
+  // change crosshair stamp text
+  const titles = {
+    SCAN:   '// LOG-EYE FEED — NP-17 // SCAN',
+    STABLE: '// LOG-EYE FEED — NP-17 // STABLE',
+    AGGR:   '// LOG-EYE FEED — NP-17 // ELEVATED',
+    GLITCH: '// LOG-EYE FEED — NP-17 // ANOMALY',
+    COOP:   '// LOG-EYE FEED — NP-17 // COOP',
+    IDLE:   '// LOG-EYE FEED — NP-17',
+  };
+  els.surveillanceTitle.textContent = titles[m] || titles.IDLE;
+}
+
+function resizeCanvas() {
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(r.width * devicePixelRatio);
+  canvas.height = Math.floor(r.height * devicePixelRatio);
+}
+new ResizeObserver(resizeCanvas).observe(canvas);
+resizeCanvas();
+
+// particles for the surveillance grid
+const particles = [];
+const PARTICLE_COUNT = 70;
+for (let i=0; i<PARTICLE_COUNT; i++) {
+  particles.push({
+    x: Math.random(), y: Math.random(),
+    vx: (Math.random()-0.5) * 0.0006,
+    vy: (Math.random()-0.5) * 0.0006,
+    size: 1 + Math.random()*2,
+  });
+}
+
+let scanY = 0;
+let lastT = performance.now();
+
+function modeColors() {
+  switch (feedMode) {
+    case 'AGGR':   return { grid: 'rgba(255,40,24,0.18)', dot: '#ff2418', sweep: 'rgba(255,40,24,0.22)', dust: 'rgba(255,80,60,0.10)' };
+    case 'GLITCH': return { grid: 'rgba(240,168,48,0.14)', dot: '#f0a830', sweep: 'rgba(255,255,255,0.20)', dust: 'rgba(240,180,90,0.12)' };
+    case 'COOP':   return { grid: 'rgba(230,230,230,0.14)', dot: '#ffffff', sweep: 'rgba(230,230,230,0.18)', dust: 'rgba(220,220,220,0.10)' };
+    case 'STABLE': return { grid: 'rgba(220,220,220,0.10)', dot: '#e8e8e8', sweep: 'rgba(220,220,220,0.16)', dust: 'rgba(220,220,220,0.08)' };
+    case 'SCAN':
+    case 'IDLE':
+    default:       return { grid: 'rgba(220,220,220,0.09)', dot: '#e8e8e8', sweep: 'rgba(220,220,220,0.18)', dust: 'rgba(220,220,220,0.07)' };
+  }
+}
+
+function drawFeed(now) {
+  const dt = Math.min(64, now - lastT);
+  lastT = now;
+  const w = canvas.width, h = canvas.height;
+  const c = modeColors();
+
+  // background
+  cctx.fillStyle = '#000';
+  cctx.fillRect(0, 0, w, h);
+
+  // dust noise
+  const noise = cctx.createImageData(Math.max(2, w>>3), Math.max(2, h>>3));
+  for (let i=0; i<noise.data.length; i+=4) {
+    const v = Math.random() * 30;
+    noise.data[i] = v; noise.data[i+1] = v; noise.data[i+2] = v; noise.data[i+3] = 60;
+  }
+  cctx.imageSmoothingEnabled = false;
+  // create offscreen and scale
+  const off = document.createElement('canvas');
+  off.width = noise.width; off.height = noise.height;
+  off.getContext('2d').putImageData(noise, 0, 0);
+  cctx.globalAlpha = 0.35;
+  cctx.drawImage(off, 0, 0, w, h);
+  cctx.globalAlpha = 1;
+
+  // grid
+  cctx.strokeStyle = c.grid;
+  cctx.lineWidth = 1;
+  const cell = Math.max(40, w / 18);
+  cctx.beginPath();
+  for (let x = 0; x <= w; x += cell) { cctx.moveTo(x, 0); cctx.lineTo(x, h); }
+  for (let y = 0; y <= h; y += cell) { cctx.moveTo(0, y); cctx.lineTo(w, y); }
+  cctx.stroke();
+
+  // particles
+  cctx.fillStyle = c.dot;
+  for (const p of particles) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0;
+    if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
+    const px = p.x * w, py = p.y * h;
+    cctx.fillRect(px, py, p.size * devicePixelRatio, p.size * devicePixelRatio);
+  }
+
+  // particle links
+  cctx.strokeStyle = c.dust;
+  cctx.lineWidth = 1;
+  for (let i=0; i<particles.length; i++) {
+    for (let j=i+1; j<particles.length; j++) {
+      const a = particles[i], b = particles[j];
+      const dx = (a.x - b.x), dy = (a.y - b.y);
+      const d = Math.hypot(dx, dy);
+      if (d < 0.13) {
+        cctx.globalAlpha = (0.13 - d) / 0.13;
+        cctx.beginPath();
+        cctx.moveTo(a.x*w, a.y*h);
+        cctx.lineTo(b.x*w, b.y*h);
+        cctx.stroke();
+      }
+    }
+  }
+  cctx.globalAlpha = 1;
+
+  // scan sweep
+  scanY += dt * (feedMode === 'AGGR' ? 0.45 : feedMode === 'GLITCH' ? 0.7 : 0.25);
+  if (scanY > h) scanY = -40;
+  const grad = cctx.createLinearGradient(0, scanY-40, 0, scanY+40);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(0.5, c.sweep);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  cctx.fillStyle = grad;
+  cctx.fillRect(0, scanY-40, w, 80);
+
+  // glitch slices
+  if (feedMode === 'GLITCH' && Math.random() < 0.2) {
+    const sy = Math.random() * h;
+    const sh = 4 + Math.random()*20;
+    const ox = (Math.random()-0.5) * 40;
+    cctx.drawImage(canvas, 0, sy, w, sh, ox, sy, w, sh);
+  }
+  if (feedMode === 'AGGR' && Math.random() < 0.08) {
+    cctx.fillStyle = 'rgba(255,40,20,0.15)';
+    cctx.fillRect(0,0,w,h);
+  }
+
+  // crosshair tick text
+  cctx.fillStyle = 'rgba(220,220,220,0.55)';
+  cctx.font = (10 * devicePixelRatio) + 'px JetBrains Mono, monospace';
+  cctx.fillText('LAT: 35.4012  LON: 139.7711  ALT: -2331m', 10*devicePixelRatio, h - 10*devicePixelRatio);
+
+  requestAnimationFrame(drawFeed);
+}
+requestAnimationFrame(drawFeed);
+
+// ---------- CLOCK ----------
+setInterval(() => {
+  const ms = Date.now() - state.startMs;
+  const s = Math.floor(ms/1000);
+  const hh = String(Math.floor(s/3600)).padStart(2,'0');
+  const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  els.feedClock.textContent = `${hh}:${mm}:${ss}`;
+  // jitter sig lock
+  const sig = (98 + Math.random()*1.9).toFixed(1);
+  els.feedTR.textContent = 'SIG-LOCK ' + sig + '%';
+}, 250);
+
+// ---------- BOOT ----------
+window.addEventListener('click', ensureAudio, { once: true });
+refreshHUD();
+goToNode('START');
+
+</script>
+</body>
+</html>
