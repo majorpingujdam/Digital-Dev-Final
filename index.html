@@ -930,12 +930,218 @@
     100% { top: 110%; opacity: 0; }
   }
 
+  /* ============================================================
+     ENTITY WINDOW — draggable cyberpunk point-cloud face
+     ============================================================ */
+  .entity-window {
+    position: fixed;
+    top: 88px;
+    right: 28px;
+    width: 280px;
+    height: 360px;
+    z-index: 8500;
+    background: radial-gradient(ellipse at center,
+      rgba(8,4,4,0.94) 0%,
+      rgba(0,0,0,0.96) 70%,
+      rgba(0,0,0,0.99) 100%);
+    border: 0.5px solid rgba(220,60,55,0.55);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 22px rgba(220,60,55,0.18),
+      0 18px 48px rgba(0,0,0,0.7),
+      inset 0 0 30px rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    user-select: none;
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    color: var(--text);
+    overflow: hidden;
+    transition: box-shadow 220ms ease, border-color 220ms ease;
+  }
+  .entity-window.dragging {
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 36px rgba(220,60,55,0.45),
+      0 24px 72px rgba(0,0,0,0.85);
+    border-color: rgba(255,90,80,0.95);
+  }
+  .entity-window.alert {
+    border-color: rgba(255,80,70,0.95);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 28px rgba(255,80,70,0.55),
+      0 18px 48px rgba(0,0,0,0.7);
+    animation: entityAlertPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes entityAlertPulse {
+    0%, 100% { filter: hue-rotate(0deg); }
+    50%      { filter: hue-rotate(-8deg) brightness(1.08); }
+  }
+
+  .entity-window .ew-corners span {
+    position: absolute; width: 12px; height: 12px;
+    border: 1px solid rgba(220,60,55,0.85);
+    pointer-events: none;
+  }
+  .entity-window .ew-corners span:nth-child(1) { top: 4px; left: 4px;     border-right: none; border-bottom: none; }
+  .entity-window .ew-corners span:nth-child(2) { top: 4px; right: 4px;    border-left: none;  border-bottom: none; }
+  .entity-window .ew-corners span:nth-child(3) { bottom: 4px; left: 4px;  border-right: none; border-top: none; }
+  .entity-window .ew-corners span:nth-child(4) { bottom: 4px; right: 4px; border-left: none;  border-top: none; }
+
+  .entity-window .ew-bar {
+    height: 26px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(40,8,8,0.85), rgba(15,4,4,0.85));
+    border-bottom: 0.5px solid rgba(220,60,55,0.4);
+    cursor: grab;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,170,160,0.9);
+  }
+  .entity-window.dragging .ew-bar { cursor: grabbing; }
+  .entity-window .ew-bar .ew-title {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .entity-window .ew-bar .ew-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(220,60,55,0.95);
+    box-shadow: 0 0 6px rgba(220,60,55,0.9);
+    animation: ewDotBlink 1s steps(2) infinite;
+  }
+  @keyframes ewDotBlink { 50% { opacity: 0.3; } }
+  .entity-window .ew-bar .ew-ctrl {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .entity-window .ew-bar .ew-btn {
+    width: 12px; height: 12px;
+    border: 1px solid rgba(220,60,55,0.7);
+    background: transparent;
+    color: rgba(255,180,170,0.85);
+    font-size: 9px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all 120ms;
+  }
+  .entity-window .ew-bar .ew-btn:hover {
+    background: rgba(220,60,55,0.7);
+    color: #000;
+  }
+
+  .entity-window .ew-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: calc(100% - 26px - 28px);
+    overflow: hidden;
+  }
+  .entity-window .ew-canvas-wrap::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.03) 0 1px,
+      transparent 1px 3px);
+    pointer-events: none; z-index: 3;
+  }
+  .entity-window .ew-canvas-wrap::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center,
+      transparent 30%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none; z-index: 4;
+  }
+  #entityFace {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    z-index: 1;
+  }
+  .entity-window .ew-readout {
+    position: absolute;
+    top: 32px; left: 8px;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: rgba(255,170,160,0.7);
+    text-transform: uppercase;
+    line-height: 1.5;
+    z-index: 5; pointer-events: none;
+    text-shadow: 0 0 4px rgba(0,0,0,0.9);
+  }
+  .entity-window .ew-readout-r {
+    position: absolute;
+    top: 32px; right: 8px;
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: rgba(255,170,160,0.7);
+    text-transform: uppercase;
+    line-height: 1.5;
+    text-align: right;
+    z-index: 5; pointer-events: none;
+    text-shadow: 0 0 4px rgba(0,0,0,0.9);
+  }
+  .entity-window .ew-foot {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 28px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(0deg, rgba(40,8,8,0.85), rgba(15,4,4,0.6));
+    border-top: 0.5px solid rgba(220,60,55,0.35);
+    font-size: 8.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,170,160,0.85);
+  }
+  .entity-window .ew-bars {
+    display: flex; gap: 2px; align-items: center;
+  }
+  .entity-window .ew-bars span {
+    width: 3px; height: 9px;
+    background: rgba(220,60,55,0.85);
+    box-shadow: 0 0 4px rgba(220,60,55,0.6);
+  }
+  .entity-window .ew-bars span:nth-child(2) { height: 11px; }
+  .entity-window .ew-bars span:nth-child(3) { height: 7px;  opacity: 0.6; }
+  .entity-window .ew-bars span:nth-child(4) { height: 13px; }
+  .entity-window .ew-bars span:nth-child(5) { height: 8px; opacity: 0.5; }
+
+  .entity-window.minimized {
+    height: 26px;
+  }
+  .entity-window.minimized .ew-canvas-wrap,
+  .entity-window.minimized .ew-foot { display: none; }
+
+  .entity-window .ew-sweep {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 28px;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(255,90,80,0.10) 50%,
+      transparent 100%);
+    pointer-events: none;
+    animation: ewSweep 4.5s linear infinite;
+    z-index: 6;
+    mix-blend-mode: screen;
+  }
+  @keyframes ewSweep {
+    0%   { top: -10%; opacity: 0; }
+    15%  { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
   /* small screens */
   @media (max-width: 900px) {
     .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .panel + .panel { border-left: none; border-top: 0.5px solid var(--cyan-ghost); }
     .boot-frame { padding: 22px 18px 16px; }
     .boot-title { font-size: 16px; letter-spacing: 0.3em; }
+    .entity-window { width: 220px; height: 290px; right: 12px; top: 60px; }
   }
 </style>
 </head>
@@ -1099,6 +1305,42 @@
   </div>
   <div class="boot-overlay-grid"></div>
   <div class="boot-sweep"></div>
+</div>
+
+<!-- ENTITY WINDOW — draggable point-cloud face of the Net entity -->
+<div class="entity-window" id="entityWindow" hidden>
+  <div class="ew-corners"><span></span><span></span><span></span><span></span></div>
+  <div class="ew-bar" id="ewBar">
+    <div class="ew-title">
+      <span class="ew-dot"></span>
+      <span>OVERSEER.ENTITY // CH-7</span>
+    </div>
+    <div class="ew-ctrl">
+      <button class="ew-btn" id="ewMin" title="MINIMISE">_</button>
+      <button class="ew-btn" id="ewClose" title="DETACH">×</button>
+    </div>
+  </div>
+  <div class="ew-canvas-wrap">
+    <canvas id="entityFace"></canvas>
+    <div class="ew-readout" id="ewReadL">
+      ID:: 0xE7-NULL<br>
+      LAT:: 35.4012<br>
+      LON:: 139.7711<br>
+      MOOD:: <span id="ewMood">NEUTRAL</span>
+    </div>
+    <div class="ew-readout-r" id="ewReadR">
+      <span id="ewSpeak">DORMANT</span><br>
+      SIG:: <span id="ewSig">0.84</span><br>
+      Δ:: <span id="ewDelta">0.00</span><br>
+      <span id="ewState">▌IDLE</span>
+    </div>
+    <div class="ew-sweep"></div>
+  </div>
+  <div class="ew-foot">
+    <span id="ewFootL">LINK :: STABLE</span>
+    <div class="ew-bars"><span></span><span></span><span></span><span></span><span></span></div>
+    <span id="ewFootR">CH-7</span>
+  </div>
 </div>
 
 <!-- ACT 2 MODAL -->
@@ -2008,10 +2250,391 @@ function bindLogin() {
   });
 }
 
+// ============================================================
+// ENTITY WINDOW — draggable cyberpunk point-cloud face
+// ============================================================
+const entity = {
+  el: document.getElementById('entityWindow'),
+  bar: document.getElementById('ewBar'),
+  canvas: document.getElementById('entityFace'),
+  speakEl: document.getElementById('ewSpeak'),
+  moodEl: document.getElementById('ewMood'),
+  sigEl: document.getElementById('ewSig'),
+  deltaEl: document.getElementById('ewDelta'),
+  stateEl: document.getElementById('ewState'),
+  footL: document.getElementById('ewFootL'),
+  yaw: 0,
+  pitch: 0,
+  targetYaw: 0,
+  targetPitch: 0,
+  speaking: false,
+  speakAmp: 0,
+  alert: false,
+  mouseX: 0,
+  mouseY: 0,
+  pos: { x: 0, y: 0 },
+  shown: false,
+  points: [],
+};
+
+(function buildFacePoints() {
+  const P = entity.points;
+  // skull rim — soft ellipse
+  for (let i = 0; i < 64; i++) {
+    const a = (i/64) * Math.PI*2;
+    P.push({ x: Math.cos(a)*82, y: Math.sin(a)*108 - 8, z: -4, kind: 'skull' });
+  }
+  // forward shell scatter (gives volume / hemisphere look)
+  for (let i = 0; i < 110; i++) {
+    const phi = Math.acos(1 - Math.random()*1.0);
+    const theta = Math.random() * Math.PI*2;
+    const r = 78 + (Math.random()-0.5)*6;
+    const x = r * Math.sin(phi) * Math.cos(theta);
+    const y = r * Math.sin(phi) * Math.sin(theta) * 1.30 - 4;
+    const z = r * Math.cos(phi) * 0.85;
+    if (z < -22) continue;
+    P.push({ x, y, z, kind: 'shell' });
+  }
+  // brow bar
+  for (let i = 0; i < 30; i++) {
+    const t = i/29;
+    const x = (t - 0.5) * 90;
+    P.push({ x, y: -36 + Math.sin(t*Math.PI)* -3, z: 28, kind: 'brow' });
+  }
+  // eyes (rings + pupil)
+  for (const ex of [-30, 30]) {
+    for (let i = 0; i < 24; i++) {
+      const a = (i/24) * Math.PI*2;
+      P.push({ x: ex + Math.cos(a)*13, y: -16 + Math.sin(a)*8, z: 32, kind: 'eye' });
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = (i/6) * Math.PI*2;
+      P.push({ x: ex + Math.cos(a)*3, y: -16 + Math.sin(a)*3, z: 38, kind: 'pupil', eyeSide: ex<0?-1:1 });
+    }
+  }
+  // nose ridge
+  for (let i = 0; i < 9; i++) {
+    P.push({ x: 0, y: -6 + i*4.5, z: 34 - i*1.6, kind: 'nose' });
+  }
+  // cheek dots
+  for (let i = 0; i < 14; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    P.push({ x: side * (40 + Math.random()*15), y: 16 + Math.random()*22, z: 18 + Math.random()*8, kind: 'cheek' });
+  }
+  // mouth arc — upper lip + lower lip (stores baseline for speak animation)
+  for (let i = 0; i < 26; i++) {
+    const t = i/25;
+    const x = (t - 0.5) * 64;
+    const y = 50 + Math.sin(t*Math.PI) * 4;
+    P.push({ x, y, z: 28, kind: 'mouthU', baseY: y, mouthT: t });
+  }
+  for (let i = 0; i < 26; i++) {
+    const t = i/25;
+    const x = (t - 0.5) * 64;
+    const y = 56 + Math.sin(t*Math.PI) * 6;
+    P.push({ x, y, z: 28, kind: 'mouthL', baseY: y, mouthT: t });
+  }
+  // jawline
+  for (let i = 0; i < 24; i++) {
+    const t = i/23;
+    const x = (t - 0.5) * 110;
+    const y = 86 + Math.sin(t*Math.PI) * 22;
+    const z = 6 + Math.sin(t*Math.PI)*16;
+    P.push({ x, y, z, kind: 'jaw' });
+  }
+})();
+
+function entityResize() {
+  const c = entity.canvas;
+  const wrap = c.parentElement;
+  if (!wrap) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  c.width  = Math.max(50, w * dpr);
+  c.height = Math.max(50, h * dpr);
+  entity._dpr = dpr;
+}
+window.addEventListener('resize', entityResize);
+
+function entityColors() {
+  const t = state.threat | 0;
+  if (t >= 75) return { base: '#ff5044', warm: '#ffb060', glow: 'rgba(255,80,68,0.55)', dim: 'rgba(255,80,68,0.18)' };
+  if (t >= 40) return { base: '#ffb060', warm: '#ffd070', glow: 'rgba(255,176,96,0.45)', dim: 'rgba(255,176,96,0.15)' };
+  return { base: '#dc3c37', warm: '#ffb060', glow: 'rgba(220,60,55,0.40)', dim: 'rgba(220,60,55,0.13)' };
+}
+
+function entityRender(now) {
+  if (!entity.shown) { requestAnimationFrame(entityRender); return; }
+  const c = entity.canvas;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  const dpr = entity._dpr || 1;
+
+  // mouse-driven target rotation (subtle "look at cursor")
+  const rect = entity.el.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = (entity.mouseX - cx);
+  const dy = (entity.mouseY - cy);
+  entity.targetYaw   = Math.max(-0.7, Math.min(0.7, dx / 600)) + Math.sin(now*0.00035) * 0.18;
+  entity.targetPitch = Math.max(-0.4, Math.min(0.4, dy / 700)) + Math.sin(now*0.00021) * 0.06;
+  entity.yaw   += (entity.targetYaw   - entity.yaw)   * 0.06;
+  entity.pitch += (entity.targetPitch - entity.pitch) * 0.06;
+
+  // speak amp eases
+  const targetAmp = entity.speaking ? 1 : 0;
+  entity.speakAmp += (targetAmp - entity.speakAmp) * 0.18;
+
+  // background fade — leaves a faint phosphor trail
+  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  ctx.fillRect(0, 0, W, H);
+
+  const col = entityColors();
+
+  const focal = 360 * dpr;
+  const ox = W/2;
+  const oy = H/2 + 8*dpr;
+  const scaleBase = (Math.min(W, H) / 320);
+
+  const cy_ = Math.cos(entity.yaw),   sy_ = Math.sin(entity.yaw);
+  const cp_ = Math.cos(entity.pitch), sp_ = Math.sin(entity.pitch);
+
+  // glitch chance for alert/high-threat
+  const glitch = Math.min(1, (state.threat || 0) / 110);
+
+  // pre-compute mouth sway phases
+  const mouthPhase = now * 0.018;
+  const mouthOpen = entity.speakAmp * (8 + Math.sin(now*0.012)*3);
+
+  // collect projected points
+  const proj = [];
+  for (const p of entity.points) {
+    let { x, y, z } = p;
+    // mouth speak displacement
+    if (p.kind === 'mouthL') {
+      y = p.baseY + Math.sin(p.mouthT * Math.PI) * (mouthOpen + Math.sin(mouthPhase + p.mouthT*5) * entity.speakAmp * 2);
+    } else if (p.kind === 'mouthU') {
+      y = p.baseY - Math.sin(p.mouthT * Math.PI) * (mouthOpen * 0.35);
+    }
+    // pupil tracking — pupils glance toward cursor
+    if (p.kind === 'pupil') {
+      const gx = Math.max(-3, Math.min(3, dx / 60));
+      const gy = Math.max(-3, Math.min(3, dy / 60));
+      x = (p.eyeSide < 0 ? -30 : 30) + Math.cos(Math.atan2(p.y - (-16), p.x - (p.eyeSide<0?-30:30))) * 3 + gx;
+      y = -16 + gy;
+    }
+    // glitch jitter
+    if (glitch > 0 && Math.random() < glitch * 0.12) {
+      x += (Math.random()-0.5) * 14;
+      y += (Math.random()-0.5) * 6;
+    }
+    // rotate yaw (around Y)
+    let x1 = x*cy_ + z*sy_;
+    let z1 = -x*sy_ + z*cy_;
+    // rotate pitch (around X)
+    let y1 = y*cp_ - z1*sp_;
+    let z2 = y*sp_ + z1*cp_;
+    const s = focal / (focal + z2 * scaleBase * 1.4);
+    proj.push({
+      sx: ox + x1 * s * scaleBase,
+      sy: oy + y1 * s * scaleBase,
+      depth: z2,
+      kind: p.kind,
+      s
+    });
+  }
+
+  // sort back-to-front
+  proj.sort((a,b) => a.depth - b.depth);
+
+  // draw
+  for (const p of proj) {
+    const depthN = (p.depth + 90) / 180; // ~0..1
+    const a = Math.max(0.06, Math.min(1, depthN * 1.0));
+    let size = 1.4 * dpr * p.s;
+    let color = col.base;
+    let alpha = a * 0.85;
+    let glowR = 0;
+
+    if (p.kind === 'pupil') {
+      size = 2.4 * dpr * p.s;
+      color = '#fff';
+      alpha = 1;
+      glowR = 8 * dpr;
+    } else if (p.kind === 'eye') {
+      color = col.warm;
+      alpha = 0.85 * a;
+      size = 1.6 * dpr * p.s;
+    } else if (p.kind === 'brow') {
+      size = 1.8 * dpr * p.s;
+      color = col.base;
+      alpha = a;
+    } else if (p.kind === 'mouthU' || p.kind === 'mouthL') {
+      color = col.base;
+      size = 1.7 * dpr * p.s;
+      alpha = 0.8 + entity.speakAmp * 0.2;
+      if (entity.speaking) glowR = 6 * dpr;
+    } else if (p.kind === 'skull' || p.kind === 'jaw') {
+      color = col.base;
+      alpha = a * 0.9;
+      size = 1.6 * dpr * p.s;
+    } else if (p.kind === 'shell' || p.kind === 'cheek') {
+      color = col.base;
+      alpha = a * 0.55;
+      size = 1.2 * dpr * p.s;
+    } else {
+      color = col.base;
+      alpha = a * 0.9;
+    }
+
+    if (glowR > 0) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = glowR;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fillRect(p.sx - size/2, p.sy - size/2, size, size);
+  }
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+
+  // horizontal scan tear
+  if (Math.random() < 0.04 + glitch * 0.2) {
+    const ty = Math.random() * H;
+    const th = 1 + Math.random() * 4;
+    ctx.fillStyle = 'rgba(255,80,70,0.18)';
+    ctx.fillRect(0, ty, W, th);
+  }
+
+  // readouts
+  if (entity._tickCount === undefined) entity._tickCount = 0;
+  entity._tickCount++;
+  if (entity._tickCount % 20 === 0) {
+    const sig = (0.78 + Math.sin(now*0.0008) * 0.08 + Math.random()*0.04).toFixed(2);
+    const delta = ((Math.random()-0.5) * (0.2 + glitch * 1.5)).toFixed(2);
+    if (entity.sigEl) entity.sigEl.textContent = sig;
+    if (entity.deltaEl) entity.deltaEl.textContent = delta;
+    const moodMap = state.threat >= 75 ? 'HOSTILE'
+                  : state.threat >= 40 ? 'AGITATED'
+                  : entity.speaking    ? 'PARSING'
+                                       : 'NEUTRAL';
+    if (entity.moodEl) entity.moodEl.textContent = moodMap;
+    if (entity.stateEl) entity.stateEl.textContent = entity.speaking ? '▌TX...' : '▌IDLE';
+    if (entity.footL) entity.footL.textContent = state.threat >= 75 ? 'LINK :: VOLATILE'
+                                                : state.threat >= 40 ? 'LINK :: STRAINED'
+                                                                     : 'LINK :: STABLE';
+  }
+  if (entity.speakEl) entity.speakEl.textContent = entity.speaking ? 'SPEAKING' : 'DORMANT';
+
+  // alert state on window
+  const wantAlert = (state.threat || 0) >= 75;
+  if (wantAlert !== entity.alert) {
+    entity.alert = wantAlert;
+    entity.el.classList.toggle('alert', wantAlert);
+  }
+
+  requestAnimationFrame(entityRender);
+}
+
+// drag logic
+(function setupEntityDrag() {
+  const el = entity.el;
+  const bar = entity.bar;
+  let down = false, ox = 0, oy = 0;
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.ew-btn')) return;
+    down = true;
+    el.classList.add('dragging');
+    const rect = el.getBoundingClientRect();
+    ox = e.clientX - rect.left;
+    oy = e.clientY - rect.top;
+    el.style.right = 'auto';
+    el.style.left = rect.left + 'px';
+    el.style.top  = rect.top  + 'px';
+    bar.setPointerCapture(e.pointerId);
+  });
+  bar.addEventListener('pointermove', (e) => {
+    if (!down) return;
+    const x = Math.max(0, Math.min(window.innerWidth  - el.offsetWidth,  e.clientX - ox));
+    const y = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, e.clientY - oy));
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+  });
+  bar.addEventListener('pointerup', (e) => {
+    down = false;
+    el.classList.remove('dragging');
+    try { bar.releasePointerCapture(e.pointerId); } catch(_) {}
+  });
+
+  document.getElementById('ewMin').addEventListener('click', () => {
+    el.classList.toggle('minimized');
+    if (typeof ensureAudio === 'function') { ensureAudio(); tone(660, 0.05, 'square', 0.04); }
+  });
+  document.getElementById('ewClose').addEventListener('click', () => {
+    el.style.display = 'none';
+    entity.shown = false;
+    if (typeof ensureAudio === 'function') { ensureAudio(); tone(220, 0.12, 'sawtooth', 0.06); }
+  });
+})();
+
+// track mouse globally so the face follows cursor
+window.addEventListener('mousemove', (e) => {
+  entity.mouseX = e.clientX;
+  entity.mouseY = e.clientY;
+});
+
+// hook into typewriter to drive "speaking" — wrap the existing one
+(function hookSpeaking() {
+  const orig = window.typewriter;
+  if (typeof orig !== 'function') return;
+  window.typewriter = function(text, cls='', speed=18) {
+    entity.speaking = true;
+    const p = orig(text, cls, speed);
+    p.then(() => { entity.speaking = false; });
+    return p;
+  };
+  // typewriterGlitch too if present
+  if (typeof window.typewriterGlitch === 'function') {
+    const og = window.typewriterGlitch;
+    window.typewriterGlitch = function(text, cls='', speed=18) {
+      entity.speaking = true;
+      const p = og(text, cls, speed);
+      p.then(() => { entity.speaking = false; });
+      return p;
+    };
+  }
+})();
+
+// reveal entity (called from login flow)
+function showEntity() {
+  if (entity.shown) return;
+  entity.shown = true;
+  entity.el.hidden = false;
+  entity.el.style.display = '';
+  entityResize();
+  requestAnimationFrame(entityRender);
+}
+
 // ---------- BOOT ----------
 window.addEventListener('click', ensureAudio, { once: true });
 bindLogin();
 bootSequence();
+
+// auto-reveal entity once login completes (boot screen removed)
+(function watchForLogin() {
+  const tick = () => {
+    const bs = document.getElementById('bootScreen');
+    if (!bs || bs.classList.contains('hidden')) {
+      showEntity();
+    } else {
+      setTimeout(tick, 400);
+    }
+  };
+  setTimeout(tick, 600);
+})();
 
 </script>
 </body>
