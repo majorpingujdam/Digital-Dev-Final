@@ -430,19 +430,89 @@
     min-height: 240px;
   }
 
+  .cam-feed {
+    position: absolute;
+    top: -8%;
+    left: -8%;
+    width: 116%;
+    height: 116%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 1;
+    filter: grayscale(0.45) contrast(1.08) brightness(0.85) saturate(0.85);
+    transform-origin: center center;
+    animation: camPan 22s ease-in-out infinite alternate;
+    will-change: transform;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  @keyframes camPan {
+    0%   { transform: translate3d(-3%,  0.5%, 0) scale(1.04) rotate(-0.4deg); }
+    25%  { transform: translate3d( 1%, -1.2%, 0) scale(1.06) rotate( 0.2deg); }
+    50%  { transform: translate3d( 3%,  0.8%, 0) scale(1.05) rotate( 0.5deg); }
+    75%  { transform: translate3d(-1%,  1.4%, 0) scale(1.07) rotate(-0.2deg); }
+    100% { transform: translate3d(-2.5%, -0.5%, 0) scale(1.04) rotate(-0.5deg); }
+  }
+  @keyframes camShake {
+    0%, 100% { filter: grayscale(0.25) contrast(1.2) brightness(0.9) saturate(0.9) hue-rotate(-6deg); }
+    50%      { filter: grayscale(0.35) contrast(1.35) brightness(0.85) saturate(1) hue-rotate(-10deg); }
+  }
+  @keyframes camJitter {
+    0%   { transform: translate3d(0, 0, 0); }
+    20%  { transform: translate3d(-1.4%, 0.6%, 0); }
+    40%  { transform: translate3d(0.9%, -0.4%, 0); }
+    60%  { transform: translate3d(-0.5%, 0.3%, 0); }
+    80%  { transform: translate3d(1.2%, -0.8%, 0); }
+    100% { transform: translate3d(0, 0, 0); }
+  }
+
+  /* per-mode camera behaviour */
+  .surveillance.mode-AGGR .cam-feed {
+    animation: camPan 9s ease-in-out infinite alternate, camShake 1.2s linear infinite;
+    filter: grayscale(0.2) contrast(1.25) brightness(0.9) saturate(1) hue-rotate(-8deg);
+  }
+  .surveillance.mode-GLITCH .cam-feed {
+    animation: camPan 14s ease-in-out infinite alternate, camJitter 0.35s steps(5) infinite;
+    filter: grayscale(0.3) contrast(1.35) brightness(0.82) saturate(0.7);
+  }
+  .surveillance.mode-COOP .cam-feed {
+    animation: camPan 28s ease-in-out infinite alternate;
+    filter: grayscale(0.55) contrast(1.05) brightness(0.95) saturate(0.85);
+  }
+  .surveillance.mode-STABLE .cam-feed {
+    animation: camPan 26s ease-in-out infinite alternate;
+    filter: grayscale(0.5) contrast(1.05) brightness(0.88) saturate(0.85);
+  }
+
+  /* dim mask + vignette so HUD overlays read clearly */
+  .surveillance::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.55) 100%),
+      linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0) 25%, rgba(0,0,0,0) 75%, rgba(0,0,0,0.25));
+    pointer-events: none;
+    z-index: 2;
+  }
+
   #feed {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     display: block;
+    z-index: 3;
+    opacity: 0.45;
+    mix-blend-mode: screen;
+    pointer-events: none;
   }
 
   .feed-overlay {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
   }
 
   .feed-overlay .stamp {
@@ -732,7 +802,8 @@
           <span class="meta">REC <span class="dot" style="background:var(--red);box-shadow:0 0 6px var(--red)"></span></span>
         </div>
 
-        <div class="surveillance">
+        <div class="surveillance" id="surveillance">
+          <img class="cam-feed" id="camFeed" src="feed.gif" alt="" draggable="false">
           <canvas id="feed"></canvas>
           <div class="feed-overlay">
             <span class="stamp tl" id="feedTL">CAM-NP-17 // STRATUM 7,421</span>
@@ -1438,6 +1509,12 @@ function setFeedMode(m) {
     IDLE:   '// LOG-EYE FEED — NP-17',
   };
   els.surveillanceTitle.textContent = titles[m] || titles.IDLE;
+  // sync camera behaviour
+  const sv = document.getElementById('surveillance');
+  if (sv) {
+    sv.classList.remove('mode-SCAN','mode-STABLE','mode-AGGR','mode-GLITCH','mode-COOP','mode-IDLE');
+    sv.classList.add('mode-' + m);
+  }
 }
 
 function resizeCanvas() {
