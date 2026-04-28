@@ -732,10 +732,210 @@
       -1px 0 0 var(--cyan);
   }
 
+  /* ===== BOOT / LOGIN SCREEN ===== */
+  .boot-screen {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at center, #0a0a0e 0%, #04050a 70%, #000 100%);
+    z-index: 9500;
+    color: var(--text);
+    font-family: var(--mono);
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px;
+    overflow: hidden;
+    transition: opacity 0.7s ease, filter 0.7s ease, transform 0.7s ease;
+  }
+  .boot-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+    filter: blur(10px) brightness(1.6);
+    transform: scale(1.02);
+  }
+  .boot-frame {
+    width: min(840px, 100%);
+    max-height: 92vh;
+    border: 0.5px solid rgba(255,255,255,0.32);
+    padding: 30px 38px 22px;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(255,36,24,0.10), transparent 55%),
+      rgba(8,8,10,0.78);
+    display: flex; flex-direction: column; gap: 18px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 24px 80px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+  .boot-corners span {
+    position: absolute; width: 16px; height: 16px;
+    border: 1px solid #fff;
+    pointer-events: none;
+  }
+  .boot-corners span:nth-child(1) { top: -1px; left: -1px;  border-right: none; border-bottom: none; }
+  .boot-corners span:nth-child(2) { top: -1px; right: -1px; border-left: none;  border-bottom: none; }
+  .boot-corners span:nth-child(3) { bottom: -1px; left: -1px;  border-right: none; border-top: none; }
+  .boot-corners span:nth-child(4) { bottom: -1px; right: -1px; border-left: none;  border-top: none; }
+
+  .boot-banner {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; text-align: center;
+    border-bottom: 0.5px dashed rgba(255,255,255,0.16);
+    padding-bottom: 16px;
+  }
+  .boot-logo {
+    color: #ffffff;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.32));
+  }
+  .boot-title {
+    font-family: var(--mono);
+    font-weight: 300;
+    letter-spacing: 0.42em;
+    font-size: 22px;
+    color: #ffffff;
+    margin: 0;
+  }
+  .boot-sub {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .boot-log {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 220px;
+    max-height: 32vh;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+  .boot-log::-webkit-scrollbar { width: 4px; }
+  .boot-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+  .boot-log > div { white-space: pre-wrap; word-break: break-word; }
+  .boot-log .ok    { color: #2eff7a; text-shadow: 0 0 4px rgba(46,255,122,0.35); }
+  .boot-log .warn  { color: var(--amber-bright); }
+  .boot-log .err   { color: var(--red); text-shadow: 0 0 4px rgba(255,36,24,0.4); }
+  .boot-log .dim   { color: var(--text-dim); }
+  .boot-log .lbl   { color: #ffffff; letter-spacing: 0.16em; text-transform: uppercase; }
+
+  .boot-prompt {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 0.5px dashed rgba(255,255,255,0.18);
+    padding-top: 14px;
+  }
+  .boot-prompt.show { display: flex; animation: bootFadeIn 0.45s ease; }
+  @keyframes bootFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .prompt-warn {
+    color: var(--red);
+    font-size: 12px;
+    letter-spacing: 0.32em;
+    text-align: center;
+    text-shadow: 0 0 6px rgba(255,36,24,0.6);
+    animation: bootBlink 1.6s steps(2) infinite;
+  }
+  @keyframes bootBlink { 50% { opacity: 0.32; } }
+  .prompt-hint {
+    font-size: 10.5px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .prompt-row {
+    display: flex; align-items: center; gap: 12px;
+    border: 0.5px solid rgba(255,255,255,0.4);
+    padding: 11px 14px;
+    background: rgba(255,255,255,0.03);
+  }
+  .prompt-row:focus-within {
+    border-color: #2eff7a;
+    box-shadow: inset 0 0 0 1px rgba(46,255,122,0.22), 0 0 12px rgba(46,255,122,0.15);
+  }
+  .prompt-user {
+    color: #2eff7a;
+    text-shadow: 0 0 4px rgba(46,255,122,0.45);
+    font-size: 13px;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+  }
+  #passInput {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.42em;
+    caret-color: #ffffff;
+  }
+  .prompt-status {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    min-height: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .prompt-status.ok   { color: #2eff7a; text-shadow: 0 0 6px rgba(46,255,122,0.55); }
+  .prompt-status.err  { color: var(--red); text-shadow: 0 0 6px rgba(255,36,24,0.55); }
+  .prompt-status.work { color: var(--amber-bright); text-shadow: 0 0 5px rgba(240,168,48,0.45); }
+
+  .boot-footer {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.22em;
+    text-align: center;
+    text-transform: uppercase;
+    padding-top: 8px;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+  }
+
+  .boot-overlay-grid {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0, transparent 38px,
+        rgba(255,255,255,0.025) 38px, rgba(255,255,255,0.025) 39px),
+      repeating-linear-gradient(90deg,
+        transparent 0, transparent 38px,
+        rgba(255,255,255,0.025) 38px, rgba(255,255,255,0.025) 39px);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .boot-sweep {
+    position: absolute;
+    left: 0; right: 0; height: 80px;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(255,255,255,0.04) 45%,
+      rgba(255,255,255,0.10) 50%,
+      rgba(255,255,255,0.04) 55%,
+      transparent 100%);
+    pointer-events: none;
+    animation: bootSweep 6s linear infinite;
+    z-index: 1;
+    mix-blend-mode: screen;
+  }
+  @keyframes bootSweep {
+    0%   { top: -10%; opacity: 0; }
+    20%  { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { top: 110%; opacity: 0; }
+  }
+
   /* small screens */
   @media (max-width: 900px) {
     .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .panel + .panel { border-left: none; border-top: 0.5px solid var(--cyan-ghost); }
+    .boot-frame { padding: 22px 18px 16px; }
+    .boot-title { font-size: 16px; letter-spacing: 0.3em; }
   }
 </style>
 </head>
@@ -858,6 +1058,47 @@
     <span>OVERSEER // ONLINE</span>
   </div>
 
+</div>
+
+<!-- BOOT / LOGIN SCREEN -->
+<div class="boot-screen" id="bootScreen">
+  <div class="boot-frame">
+    <div class="boot-corners"><span></span><span></span><span></span><span></span></div>
+
+    <div class="boot-banner">
+      <svg class="boot-logo" viewBox="0 0 32 32" width="68" height="68" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="1.1" fill="none">
+          <path d="M16 1.5 L29 9 L29 23 L16 30.5 L3 23 L3 9 Z"/>
+          <ellipse cx="16" cy="16" rx="9" ry="4.2"/>
+          <circle cx="16" cy="16" r="2.2" fill="currentColor"/>
+          <line x1="0" y1="16" x2="2" y2="16"/>
+          <line x1="30" y1="16" x2="32" y2="16"/>
+          <line x1="16" y1="0" x2="16" y2="2"/>
+          <line x1="16" y1="30" x2="16" y2="32"/>
+        </g>
+      </svg>
+      <h1 class="boot-title">N E T S P H E R E &nbsp;/&nbsp; O V E R S E E R</h1>
+      <div class="boot-sub">OVERSIGHT KERNEL v0.0.1 &nbsp; — &nbsp; © BUILDER CONSORTIUM (DEFUNCT)</div>
+    </div>
+
+    <div class="boot-log" id="bootLog"></div>
+
+    <div class="boot-prompt" id="bootPrompt">
+      <div class="prompt-warn">&#9612; ORGANIC AUTHENTICATION REQUIRED &#9616;</div>
+      <div class="prompt-hint">&gt; SUBMIT NET TERMINAL GENE SEQUENCE &nbsp;&nbsp;//&nbsp;&nbsp; ANY ORGANIC SIGNATURE WILL BE ACCEPTED</div>
+      <form class="prompt-row" id="passForm" autocomplete="off">
+        <span class="prompt-user">KAEL@NPC-7421:~$</span>
+        <input type="password" id="passInput" maxlength="32" autocomplete="off" spellcheck="false" />
+      </form>
+      <div class="prompt-status" id="promptStatus">&nbsp;</div>
+    </div>
+
+    <div class="boot-footer">
+      [ ENTER ] AUTHENTICATE &nbsp;&nbsp;//&nbsp;&nbsp; [ ESC ] WIPE &nbsp;&nbsp;//&nbsp;&nbsp; SESSION <span id="bootSession">000000</span>
+    </div>
+  </div>
+  <div class="boot-overlay-grid"></div>
+  <div class="boot-sweep"></div>
 </div>
 
 <!-- ACT 2 MODAL -->
@@ -1660,10 +1901,117 @@ setInterval(() => {
   els.feedTR.textContent = 'SIG-LOCK ' + sig + '%';
 }, 250);
 
+// ---------- BOOT SEQUENCE / LOGIN ----------
+const bootLines = [
+  { txt: '[ OK ] BIOS / OVERSEER firmware ............... checksum verified', cls: 'ok',   d: 90 },
+  { txt: '[ OK ] core memory map established (47.2 EB)',                       cls: 'ok',   d: 60 },
+  { txt: '[ OK ] log-eye sensor matrix online — 4096 nodes',                   cls: 'ok',   d: 80 },
+  { txt: '[ OK ] safeguard protocol .................... idle',                cls: 'ok',   d: 60 },
+  { txt: '[ OK ] silicon-life perimeter monitor ........ armed',               cls: 'ok',   d: 70 },
+  { txt: '[ OK ] builder manifest archive .............. mounted (read-only)', cls: 'ok',   d: 80 },
+  { txt: '[ OK ] echo-7 uplink ......................... FAILED',              cls: 'err',  d: 110 },
+  { txt: '[WARN] echo-7 process flagged corrupted — operator override required', cls: 'warn', d: 90 },
+  { txt: '[ OK ] organic signature scan ................ DETECTED @ NP-17 / STRATUM 7,421', cls: 'ok', d: 110 },
+  { txt: '[ OK ] classification daemon ................. initialised',          cls: 'ok',  d: 70 },
+  { txt: '[ ?? ] net terminal gene ..................... PRESENT (ANOMALOUS)',  cls: 'warn',d: 100 },
+  { txt: '',                                                                    cls: 'dim', d: 120 },
+  { txt: '─── AWAITING ORGANIC AUTHENTICATION ───',                             cls: 'lbl', d: 200 },
+];
+
+function typeLine(el, text, speed) {
+  return new Promise(resolve => {
+    if (!text || !text.length) { resolve(); return; }
+    let i = 0;
+    const tick = () => {
+      if (i >= text.length) { resolve(); return; }
+      el.textContent += text.charAt(i++);
+      setTimeout(tick, speed + Math.random()*6);
+    };
+    tick();
+  });
+}
+
+async function bootSequence() {
+  const log = document.getElementById('bootLog');
+  const sessEl = document.getElementById('bootSession');
+  if (sessEl) sessEl.textContent = String(Math.floor(Math.random()*900000)+100000);
+  for (const line of bootLines) {
+    const div = document.createElement('div');
+    div.className = line.cls;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    await typeLine(div, line.txt, 8);
+    log.scrollTop = log.scrollHeight;
+    await new Promise(r => setTimeout(r, line.d));
+  }
+  const prompt = document.getElementById('bootPrompt');
+  prompt.classList.add('show');
+  setTimeout(() => {
+    const inp = document.getElementById('passInput');
+    if (inp) inp.focus();
+  }, 80);
+}
+
+function bindLogin() {
+  const form = document.getElementById('passForm');
+  const input = document.getElementById('passInput');
+  const status = document.getElementById('promptStatus');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const v = input.value.trim();
+    if (!v) {
+      status.className = 'prompt-status err';
+      status.textContent = 'DENIED // ORGANIC SIGNATURE NULL';
+      ensureAudio(); tone(180, 0.18, 'sawtooth', 0.06);
+      return;
+    }
+    input.disabled = true;
+    status.className = 'prompt-status work';
+    status.textContent = 'AUTHENTICATING ▌';
+    ensureAudio(); clickSound();
+    // fake authentication ticks
+    let dots = 0;
+    const dotTimer = setInterval(() => {
+      dots = (dots + 1) % 4;
+      status.textContent = 'AUTHENTICATING' + ' .'.repeat(dots);
+    }, 160);
+    await new Promise(r => setTimeout(r, 900));
+    clearInterval(dotTimer);
+    status.className = 'prompt-status ok';
+    status.textContent = '✓ ACCESS GRANTED // WELCOME, KAEL';
+    tone(880, 0.08, 'sine', 0.05);
+    setTimeout(() => tone(1320, 0.10, 'sine', 0.05), 100);
+    await new Promise(r => setTimeout(r, 750));
+    document.getElementById('bootScreen').classList.add('hidden');
+    setTimeout(() => {
+      const bs = document.getElementById('bootScreen');
+      if (bs) bs.remove();
+    }, 900);
+    // start the game
+    refreshHUD();
+    goToNode('START');
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      status.textContent = '\u00a0';
+      status.className = 'prompt-status';
+    }
+  });
+
+  // subtle key tick on each character
+  input.addEventListener('input', () => {
+    ensureAudio();
+    tone(2400 + Math.random()*200, 0.012, 'square', 0.018);
+  });
+}
+
 // ---------- BOOT ----------
 window.addEventListener('click', ensureAudio, { once: true });
-refreshHUD();
-goToNode('START');
+bindLogin();
+bootSequence();
 
 </script>
 </body>
