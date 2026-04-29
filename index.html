@@ -2279,68 +2279,168 @@ const entity = {
 
 (function buildFacePoints() {
   const P = entity.points;
-  // skull rim — soft ellipse
-  for (let i = 0; i < 64; i++) {
-    const a = (i/64) * Math.PI*2;
-    P.push({ x: Math.cos(a)*82, y: Math.sin(a)*108 - 8, z: -4, kind: 'skull' });
+
+  // ---- HEAD VOLUME ----
+  // dense horizontal slices forming a real head silhouette: dome on top,
+  // wide at temples/cheeks, narrowing toward chin
+  for (let layer = 0; layer < 60; layer++) {
+    const v = layer / 59;             // 0 = top of head, 1 = chin
+    const yWorld = -135 + v * 270;
+    let rx, rz;
+    if (v < 0.14) {
+      const t = v / 0.14;
+      const dome = Math.sin(t * Math.PI/2);
+      rx = 70 * dome;
+      rz = 62 * dome;
+    } else if (v < 0.50) {            // forehead → cheekbones
+      const t = (v - 0.14) / 0.36;
+      rx = 70 + Math.sin(t*Math.PI) * 6;
+      rz = 64 + Math.sin(t*Math.PI) * 4;
+    } else if (v < 0.78) {            // cheek → jaw narrowing
+      const t = (v - 0.50) / 0.28;
+      rx = 76 - t*30;
+      rz = 68 - t*22;
+    } else if (v < 0.94) {            // jaw line
+      const t = (v - 0.78) / 0.16;
+      rx = 46 - t*22;
+      rz = 46 - t*16;
+    } else {                          // chin point
+      const t = (v - 0.94) / 0.06;
+      rx = 24 * (1 - t*0.7);
+      rz = 30 * (1 - t*0.5);
+    }
+    const circ = 2 * Math.PI * Math.max(rx, rz);
+    const count = Math.max(10, Math.floor(circ / 3.2));
+    for (let i = 0; i < count; i++) {
+      const a = (i/count) * Math.PI * 2;
+      let x = Math.cos(a) * rx;
+      let z = Math.sin(a) * rz;
+      if (z < -50) continue;          // cull deep back of head
+      x += (Math.random()-0.5) * 1.4;
+      z += (Math.random()-0.5) * 1.4;
+      const nx = x / Math.max(1, rx);
+      const nz = z / Math.max(1, rz);
+      P.push({ x, y: yWorld, z, nx, ny: 0, nz, kind: 'shell' });
+    }
   }
-  // forward shell scatter (gives volume / hemisphere look)
-  for (let i = 0; i < 110; i++) {
-    const phi = Math.acos(1 - Math.random()*1.0);
-    const theta = Math.random() * Math.PI*2;
-    const r = 78 + (Math.random()-0.5)*6;
-    const x = r * Math.sin(phi) * Math.cos(theta);
-    const y = r * Math.sin(phi) * Math.sin(theta) * 1.30 - 4;
-    const z = r * Math.cos(phi) * 0.85;
-    if (z < -22) continue;
-    P.push({ x, y, z, kind: 'shell' });
-  }
-  // brow bar
-  for (let i = 0; i < 30; i++) {
-    const t = i/29;
-    const x = (t - 0.5) * 90;
-    P.push({ x, y: -36 + Math.sin(t*Math.PI)* -3, z: 28, kind: 'brow' });
-  }
-  // eyes (rings + pupil)
+
+  // ---- EYE SOCKETS (recessed shadow) ----
   for (const ex of [-30, 30]) {
-    for (let i = 0; i < 24; i++) {
-      const a = (i/24) * Math.PI*2;
-      P.push({ x: ex + Math.cos(a)*13, y: -16 + Math.sin(a)*8, z: 32, kind: 'eye' });
+    for (let i = 0; i < 36; i++) {
+      const a = (i/36) * Math.PI * 2;
+      const rxE = 16, ryE = 9;
+      P.push({
+        x: ex + Math.cos(a) * rxE,
+        y: -28 + Math.sin(a) * ryE,
+        z: 30,
+        nx: 0, ny: 0, nz: 1,
+        kind: 'socket'
+      });
     }
-    for (let i = 0; i < 6; i++) {
-      const a = (i/6) * Math.PI*2;
-      P.push({ x: ex + Math.cos(a)*3, y: -16 + Math.sin(a)*3, z: 38, kind: 'pupil', eyeSide: ex<0?-1:1 });
+    // a few iris dots — small dim cluster
+    for (let i = 0; i < 5; i++) {
+      const a = (i/5) * Math.PI * 2;
+      P.push({
+        x: ex + Math.cos(a)*2.5,
+        y: -28 + Math.sin(a)*2.5,
+        z: 32,
+        nx:0, ny:0, nz:1,
+        kind: 'pupil',
+        eyeSide: ex < 0 ? -1 : 1
+      });
     }
   }
-  // nose ridge
-  for (let i = 0; i < 9; i++) {
-    P.push({ x: 0, y: -6 + i*4.5, z: 34 - i*1.6, kind: 'nose' });
+
+  // ---- BROW RIDGE (slight forward bump shading the eyes) ----
+  for (let i = 0; i < 38; i++) {
+    const t = i/37;
+    const x = (t - 0.5) * 96;
+    P.push({
+      x,
+      y: -42 + Math.abs(t - 0.5) * 4,
+      z: 56 + Math.sin(t*Math.PI) * 6,
+      nx: 0, ny: -0.5, nz: 0.85,
+      kind: 'brow'
+    });
   }
-  // cheek dots
-  for (let i = 0; i < 14; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    P.push({ x: side * (40 + Math.random()*15), y: 16 + Math.random()*22, z: 18 + Math.random()*8, kind: 'cheek' });
+
+  // ---- NOSE BRIDGE + TIP (protruding ridge) ----
+  for (let i = 0; i < 18; i++) {
+    const t = i/17;
+    const z = 56 + t * 14;
+    P.push({ x: 0, y: -32 + t * 46, z, nx:0, ny:-0.35, nz:0.94, kind: 'nose' });
   }
-  // mouth arc — upper lip + lower lip (stores baseline for speak animation)
-  for (let i = 0; i < 26; i++) {
-    const t = i/25;
-    const x = (t - 0.5) * 64;
-    const y = 50 + Math.sin(t*Math.PI) * 4;
-    P.push({ x, y, z: 28, kind: 'mouthU', baseY: y, mouthT: t });
+  // nose wings
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 7; i++) {
+      const t = i/6;
+      P.push({
+        x: side * (3 + t*5),
+        y: 10 + t*4,
+        z: 60 - t*2,
+        nx: side*0.5, ny:0, nz: 0.86,
+        kind: 'nose'
+      });
+    }
   }
-  for (let i = 0; i < 26; i++) {
-    const t = i/25;
-    const x = (t - 0.5) * 64;
-    const y = 56 + Math.sin(t*Math.PI) * 6;
-    P.push({ x, y, z: 28, kind: 'mouthL', baseY: y, mouthT: t });
+
+  // ---- CHEEKBONES (catch the light) ----
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 18; i++) {
+      const t = i/17;
+      P.push({
+        x: side * (32 + t*10),
+        y: -2 + t*16,
+        z: 50 - t*6,
+        nx: side*0.7, ny:0, nz:0.7,
+        kind: 'cheek'
+      });
+    }
   }
-  // jawline
-  for (let i = 0; i < 24; i++) {
-    const t = i/23;
-    const x = (t - 0.5) * 110;
-    const y = 86 + Math.sin(t*Math.PI) * 22;
-    const z = 6 + Math.sin(t*Math.PI)*16;
-    P.push({ x, y, z, kind: 'jaw' });
+
+  // ---- CLOSED LIPS (serious, neutral, slight downturn) ----
+  for (let i = 0; i < 36; i++) {
+    const t = i/35;
+    const x = (t - 0.5) * 52;
+    const dy = Math.abs(t - 0.5) * 5; // corners slightly lower
+    P.push({
+      x,
+      y: 38 + dy,
+      z: 50,
+      nx: 0, ny: 0, nz: 1,
+      kind: 'lips',
+      baseY: 38 + dy,
+      mouthT: t
+    });
+  }
+
+  // ---- JAW LINE ----
+  for (let i = 0; i < 36; i++) {
+    const t = i/35;
+    const x = (t - 0.5) * 100;
+    P.push({
+      x,
+      y: 70 + Math.sin(t*Math.PI) * 36,
+      z: 32 - Math.sin(t*Math.PI) * 20,
+      nx: 0, ny: 0.4, nz: 0.6,
+      kind: 'jaw'
+    });
+  }
+
+  // ---- DISPERSAL DUST (particles drifting outside silhouette) ----
+  for (let i = 0; i < 140; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const yLayer = -150 + Math.random() * 320;
+    const baseR = 70 + Math.random() * 90;
+    const x = Math.cos(a) * baseR;
+    const z = Math.sin(a) * baseR * 0.55;
+    if (z < -40) continue;
+    P.push({
+      x, y: yLayer, z,
+      kind: 'dust',
+      seed: Math.random() * 1000,
+      baseX: x, baseY: yLayer, baseZ: z
+    });
   }
 })();
 
