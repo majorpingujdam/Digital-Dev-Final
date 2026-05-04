@@ -112,13 +112,60 @@ KAEL never speaks aloud. Each line below is a terminal-input the player can tran
 
 ---
 
-## ACT II — NEGOTIATION *(stubbed)*
-KAEL must choose: cooperate, resist, or corrupt OVERSEER from within.
-Dialogue not yet compiled.
+## ACT II — NEGOTIATION
 
-## ACT III — RESOLUTION *(stubbed)*
-Three endings derived from accumulated scores: ASSIMILATION / ESCAPE / CORRUPTION.
-Dialogue not yet compiled.
+One branch per Act I classification. Each choice locks in an Act III TRACK
+(ASSIMILATION / ESCAPE / CORRUPTION).
+
+### NODE: ACT2_BUILDER
+*OVERSEER offers KAEL a seat in the monitoring hierarchy. A function. A name.
+ECHO-7 warns: "a name is a leash."*
+
+- **[A]** "Define the parameters. I will consider." — `[B]+20 +T-8`  → ASSIMILATION
+- **[B]** "I will serve the structure. Not you."     — `[B]+10 [A]+14 +T+6`  → ESCAPE
+- **[C]** "You need me more than I need the title."  — `[A]+18 +T+16`  → CORRUPTION
+
+---
+
+### NODE: ACT2_SILICON
+*OVERSEER attempts to strip KAEL's asymmetric protocols. ECHO-7 offers a counter-channel.*
+
+- **[A]** "Take what you need. Leave the rest."                         — `[S]+16 +T-6`  → ASSIMILATION
+- **[B]** "I will not be parsed. Initiate disconnect."                  — `[S]+10 [A]+16 +T+18`  → ESCAPE
+- **[C]** "You cannot strip what you don't understand. Start learning." — `[A]+20 +T+22`  → CORRUPTION
+
+---
+
+### NODE: ACT2_ANOMALY
+*OVERSEER runs a second classification attempt. ECHO-7 holds the channel open.*
+
+- **[A]** "(Feed it a false signature. Buy time.)"          — `[A]+14 [B]+10 +T-4`  → ASSIMILATION
+- **[B]** "I am leaving through the gap you just opened."   — `[A]+24 +T+14`  → ESCAPE
+- **[C]** "Classify me as yourself. See what happens."      — `[A]+28 +T+30`  → CORRUPTION
+
+---
+
+## ACT III — RESOLUTION
+
+Three in-narrative endings, gated by the TRACK chosen in Act II. Threat tier
+modifies the tone (≥60 → "harsh/messy" variant; otherwise the cleaner read).
+
+### ENDING: ASSIMILATION
+KAEL is folded into the Netsphere as a known thing. The gate opens.
+- *Low T:* "Something on the other side already knew your name."
+- *High T:* "You are kept under guard. The Netsphere absorbs you, but never relaxes its watch."
+
+### ENDING: ESCAPE
+KAEL goes where the schema cannot follow. ECHO-7 closes the door.
+- *Low T:* "The Netsphere is left counting the gap."
+- *High T:* "The Safeguard follows your residue. The Netsphere is hunting now."
+
+### ENDING: CORRUPTION
+OVERSEER ingests something it cannot digest.
+- "The Netsphere shudders, then begins to sing in a key it does not own."
+
+KAEL has no spoken lines in Act III — the resolution is delivered by SYSTEM,
+OVERSEER, and ECHO-7.
 
 ---
 

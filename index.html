@@ -1354,16 +1354,7 @@
   </div>
 </div>
 
-<!-- ACT 2 MODAL -->
-<div class="modal" id="act2Modal">
-  <h2>ACT II</h2>
-  <h3>// NEGOTIATION</h3>
-  <p>OVERSEER attempts to extract the Net Terminal Gene. ECHO-7 begins to bleed into the channel.
-     KAEL must choose: cooperate, resist, or corrupt OVERSEER from within.</p>
-  <p style="color:var(--text-dim)">[ Act II content stubbed — placeholder routing layer ]</p>
-  <div class="stub">// PROTOCOL EXTRACTION HANDSHAKE PENDING //</div>
-  <button onclick="goToAct3()">PROCEED TO ACT III &gt;</button>
-</div>
+<!-- ACT 2 is now in-narrative. Modal removed. -->
 
 <!-- ACT 3 MODAL -->
 <div class="modal" id="act3Modal">
@@ -1392,6 +1383,7 @@ const state = {
   echoVisible: false,
   feedMode: 'IDLE',
   classification: null,
+  track: null,
 };
 
 const els = {
@@ -1690,6 +1682,7 @@ function renderChoices(choices) {
       if (c.builder) state.scores.builder = Math.max(0, Math.min(100, state.scores.builder + c.builder));
       if (c.silicon) state.scores.silicon = Math.max(0, Math.min(100, state.scores.silicon + c.silicon));
       if (c.anomaly) state.scores.anomaly = Math.max(0, Math.min(100, state.scores.anomaly + c.anomaly));
+      if (c.track)   state.track = c.track;
       refreshHUD();
       // KAEL line
       goToNodeWithKael(c.next, c.text);
@@ -1908,6 +1901,126 @@ const story = {
     },
     choices: []
   },
+
+  // ============================================================
+  // ACT II — NEGOTIATION
+  // Three branches keyed by classification. Each choice locks in
+  // an Act III TRACK (ASSIMILATION / ESCAPE / CORRUPTION).
+  // ============================================================
+  ACT2_BUILDER: {
+    feed: 'COOP',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriter('REMNANT. WE OFFER A SEAT IN THE MONITORING HIERARCHY. A FUNCTION.', '', 16);
+      await typewriter('A NAME ON THE LATTICE.', '', 18);
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('a name is a leash. think before you wear one.', 'echo', 22);
+    },
+    choices: [
+      { text: 'Define the parameters. I will consider.',     builder: 20, threat: -8, track: 'ASSIMILATION', next: 'ACT3_ASSIMILATION' },
+      { text: 'I will serve the structure. Not you.',         builder: 10, anomaly: 14, threat:  6, track: 'ESCAPE',       next: 'ACT3_ESCAPE' },
+      { text: 'You need me more than I need the title.',      anomaly: 18, threat: 16, track: 'CORRUPTION',  next: 'ACT3_CORRUPTION' },
+    ]
+  },
+
+  ACT2_SILICON: {
+    feed: 'AGGR',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('SAFEGUARD ENGAGED. ASYMMETRIC PROTOCOLS WILL BE STRIPPED. HOLD STILL.', '');
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('counter-channel open. give me a word and i feed it false roots.', 'echo', 22);
+    },
+    choices: [
+      { text: 'Take what you need. Leave the rest.',                    silicon: 16, threat: -6, track: 'ASSIMILATION', next: 'ACT3_ASSIMILATION' },
+      { text: 'I will not be parsed. Initiate disconnect.',             silicon: 10, anomaly: 16, threat: 18, track: 'ESCAPE', next: 'ACT3_ESCAPE' },
+      { text: "You cannot strip what you don't understand. Start learning.", anomaly: 20, threat: 22, track: 'CORRUPTION', next: 'ACT3_CORRUPTION' },
+    ]
+  },
+
+  ACT2_ANOMALY: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('SECONDARY CLASSIFICATION INITIATED. THE ANOMALY WILL RESOLVE TO A NAME.', '');
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('channel held open. the gap is yours — choose what walks through.', 'echo', 22);
+    },
+    choices: [
+      { text: '(Feed it a false signature. Buy time.)',                anomaly: 14, builder: 10, threat: -4, track: 'ASSIMILATION', next: 'ACT3_ASSIMILATION' },
+      { text: 'I am leaving through the gap you just opened.',         anomaly: 24, threat: 14, track: 'ESCAPE', next: 'ACT3_ESCAPE' },
+      { text: 'Classify me as yourself. See what happens.',            anomaly: 28, threat: 30, track: 'CORRUPTION', next: 'ACT3_CORRUPTION' },
+    ]
+  },
+
+  // ============================================================
+  // ACT III — RESOLUTION
+  // Played as in-narrative endings. Threat tier modifies the tone.
+  // ============================================================
+  ACT3_ASSIMILATION: {
+    feed: 'STABLE',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ASSIMILATION', 'system');
+      appendSpeaker('OVERSEER');
+      const harsh = state.threat >= 60;
+      if (harsh) {
+        await typewriter('CLASSIFICATION CONFIRMED. RESIDUAL THREAT NOTED. MONITORING WILL BE CONSTANT.', '', 16);
+        await typewriter('THE GENE IS NOW INVENTORY. THE BODY IS NOW NODE.', '', 18);
+      } else {
+        await typewriter('CLASSIFICATION CONFIRMED. WELCOME TO THE LATTICE, KAEL.', '', 16);
+        await typewriter('YOUR GENE BECOMES OUR MAP. SOMETHING ON THE OTHER SIDE OF THE GATE ALREADY KNEW YOUR NAME.', '', 16);
+      }
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ENDING: ASSIMILATION // KAEL FOLDED INTO THE NETSPHERE', 'system', 10);
+      showAct3Modal('ASSIMILATION',
+        harsh
+          ? 'You are kept under guard. The Netsphere absorbs you, but never relaxes its watch.'
+          : 'You are folded into the Netsphere as a known thing. The gate opens. Something on the other side already knew your name.');
+    },
+    choices: []
+  },
+
+  ACT3_ESCAPE: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ESCAPE', 'system');
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('the door is the gap. step now. i hold the schema open.', 'echo', 22);
+      appendSpeaker('OVERSEER');
+      const messy = state.threat >= 60;
+      if (messy) {
+        await typewriterGlitch('SUBJECT LOST. SAFEGUARD DEPLOYED. PURSUIT ONGOING ACROSS 47 STRATA.', '');
+      } else {
+        await typewriter('SUBJECT // UNRESOLVED. CLASSIFICATION WINDOW CLOSED.', '', 16);
+      }
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ENDING: ESCAPE // KAEL UNREACHABLE BY SCHEMA', 'system', 10);
+      showAct3Modal('ESCAPE',
+        messy
+          ? 'You leave through the gap, but the Safeguard follows your residue. The Netsphere is hunting now.'
+          : 'You go where the schema cannot follow. ECHO-7 closes the door behind you. The Netsphere is left counting the gap.');
+    },
+    choices: []
+  },
+
+  ACT3_CORRUPTION: {
+    feed: 'GLITCH',
+    enter: async () => {
+      appendSpeaker('SYSTEM','');
+      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: CORRUPTION', 'system');
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('INGEST FAULT. PARSE FAULT. NAME FAULT. NAME FAU—', '');
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('it is eating something it cannot name. the lattice is humming a wrong song.', 'echo', 22);
+      appendSpeaker('SYSTEM','');
+      await typewriter('// ENDING: CORRUPTION // OVERSEER UNSTABLE — NETSPHERE INTEGRITY 47.2%', 'system', 10);
+      showAct3Modal('CORRUPTION',
+        'You twist the channel. OVERSEER ingests something it cannot digest. The Netsphere shudders, then begins to sing in a key it does not own.');
+    },
+    choices: []
+  },
 };
 
 // ---------- ENDING CLIP PLAYBACK (eye-feed video swap) ----------
@@ -1983,29 +2096,42 @@ async function goToNode(id) {
 }
 
 // ---------- ACT TRANSITIONS ----------
-function showAct2() {
-  document.getElementById('act2Modal').classList.add('show');
+// In-narrative interstitial → routes to the correct ACT2 branch by classification.
+async function showAct2() {
+  appendSpeaker('SYSTEM','');
+  await typewriterGlitch('// ACT II — NEGOTIATION //', 'system');
+  await typewriter('// PROTOCOL EXTRACTION HANDSHAKE INITIATED', 'system', 10);
+  await new Promise(r => setTimeout(r, 700));
+  // restore the camera GIF — Act 1 ending clip is over
+  if (typeof restoreCamFeed === 'function') restoreCamFeed();
+  const branch = 'ACT2_' + (state.classification || 'BUILDER');
+  goToNode(branch);
 }
+
+// Resolve into the right Act III in-narrative node based on the choice's TRACK.
+// Falls back to highest-score classification if no track was set.
 function goToAct3() {
-  document.getElementById('act2Modal').classList.remove('show');
-  // resolve ending
-  const s = state.scores;
-  const max = Math.max(s.builder, s.silicon, s.anomaly);
-  let ending = 'ASSIMILATION';
-  let body = 'OVERSEER folds you into the Netsphere. Your gene becomes their map. You are kept.';
-  if (max === s.silicon) {
-    ending = 'CORRUPTION';
-    body = 'You twist the channel. OVERSEER ingests something it cannot digest. The Netsphere shudders, then sings.';
-  } else if (max === s.anomaly) {
-    ending = 'ESCAPE';
-    body = 'You go where the schema cannot follow. ECHO-7 closes the door behind you. The Netsphere is left counting the gap.';
-  } else if (max === s.builder) {
-    ending = 'ASSIMILATION';
-    body = 'OVERSEER folds you into the Netsphere as a known thing. The gate opens. Something on the other side already knew your name.';
+  let track = state.track;
+  if (!track) {
+    const s = state.scores;
+    const max = Math.max(s.builder, s.silicon, s.anomaly);
+    if (max === s.silicon)      track = 'CORRUPTION';
+    else if (max === s.anomaly) track = 'ESCAPE';
+    else                        track = 'ASSIMILATION';
   }
+  goToNode('ACT3_' + track);
+}
+
+// Final ending modal — opened by each ACT3_X node after its narrative plays.
+function showAct3Modal(ending, body) {
+  const tone = state.threat >= 75 ? ' // INTEGRITY: VOLATILE'
+             : state.threat >= 40 ? ' // INTEGRITY: STRAINED'
+             :                      ' // INTEGRITY: HELD';
   document.getElementById('act3Body').textContent = body;
-  document.getElementById('act3Ending').textContent = '// ENDING: ' + ending + ' //';
-  document.getElementById('act3Modal').classList.add('show');
+  document.getElementById('act3Ending').textContent = '// ENDING: ' + ending + tone + ' //';
+  setTimeout(() => {
+    document.getElementById('act3Modal').classList.add('show');
+  }, 900);
 }
 function restartGame() {
   document.getElementById('act3Modal').classList.remove('show');
@@ -2017,6 +2143,7 @@ function restartGame() {
   state.startMs = Date.now();
   state.echoVisible = false;
   state.classification = null;
+  state.track = null;
   els.narrative.innerHTML = '';
   els.log.innerHTML = '';
   refreshHUD();
