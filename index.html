@@ -1354,7 +1354,16 @@
   </div>
 </div>
 
-<!-- ACT 2 is now in-narrative. Modal removed. -->
+<!-- ACT 2 MODAL — title card between Act I and Act II -->
+<div class="modal" id="act2Modal">
+  <h2>ACT II</h2>
+  <h3>// NEGOTIATION</h3>
+  <p>OVERSEER attempts to extract the Net Terminal Gene. ECHO-7 bleeds into the channel.
+     KAEL must choose: cooperate, resist, or corrupt OVERSEER from within.</p>
+  <p style="color:var(--text-dim)" id="act2Brief">// PROTOCOL EXTRACTION HANDSHAKE INITIATED</p>
+  <div class="stub" id="act2Branch">// AWAITING CLASSIFICATION ROUTE //</div>
+  <button onclick="enterAct2()">PROCEED TO NEGOTIATION &gt;</button>
+</div>
 
 <!-- ACT 3 MODAL -->
 <div class="modal" id="act3Modal">
@@ -1910,6 +1919,7 @@ const story = {
   ACT2_BUILDER: {
     feed: 'COOP',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('OVERSEER');
       await typewriter('REMNANT. WE OFFER A SEAT IN THE MONITORING HIERARCHY. A FUNCTION.', '', 16);
       await typewriter('A NAME ON THE LATTICE.', '', 18);
@@ -1926,6 +1936,7 @@ const story = {
   ACT2_SILICON: {
     feed: 'AGGR',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('OVERSEER');
       await typewriterGlitch('SAFEGUARD ENGAGED. ASYMMETRIC PROTOCOLS WILL BE STRIPPED. HOLD STILL.', '');
       appendSpeaker('ECHO-7','echo');
@@ -1941,6 +1952,7 @@ const story = {
   ACT2_ANOMALY: {
     feed: 'GLITCH',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('OVERSEER');
       await typewriterGlitch('SECONDARY CLASSIFICATION INITIATED. THE ANOMALY WILL RESOLVE TO A NAME.', '');
       appendSpeaker('ECHO-7','echo');
@@ -1960,6 +1972,7 @@ const story = {
   ACT3_ASSIMILATION: {
     feed: 'STABLE',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('SYSTEM','');
       await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ASSIMILATION', 'system');
       appendSpeaker('OVERSEER');
@@ -1984,6 +1997,7 @@ const story = {
   ACT3_ESCAPE: {
     feed: 'GLITCH',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('SYSTEM','');
       await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ESCAPE', 'system');
       appendSpeaker('ECHO-7','echo');
@@ -2008,6 +2022,7 @@ const story = {
   ACT3_CORRUPTION: {
     feed: 'GLITCH',
     enter: async () => {
+      ensureClassificationClip();
       appendSpeaker('SYSTEM','');
       await typewriterGlitch('// ACT III — RESOLUTION // TRACK: CORRUPTION', 'system');
       appendSpeaker('OVERSEER');
@@ -2096,16 +2111,42 @@ async function goToNode(id) {
 }
 
 // ---------- ACT TRANSITIONS ----------
-// In-narrative interstitial → routes to the correct ACT2 branch by classification.
-async function showAct2() {
-  appendSpeaker('SYSTEM','');
-  await typewriterGlitch('// ACT II — NEGOTIATION //', 'system');
-  await typewriter('// PROTOCOL EXTRACTION HANDSHAKE INITIATED', 'system', 10);
-  await new Promise(r => setTimeout(r, 700));
-  // restore the camera GIF — Act 1 ending clip is over
-  if (typeof restoreCamFeed === 'function') restoreCamFeed();
+// Open the Act II title-card modal. Player clicks PROCEED to enter the playable branch.
+// Ending clip from Act I keeps playing into Act II / Act III (only restored on restart).
+function showAct2() {
+  const branch = 'ACT2_' + (state.classification || 'BUILDER');
+  const labels = {
+    ACT2_BUILDER: '// ROUTE: BUILDER REMNANT // OVERSEER OFFERS A SEAT IN THE LATTICE',
+    ACT2_SILICON: '// ROUTE: SILICON HYBRID // SAFEGUARD ENGAGED // PROTOCOL STRIP',
+    ACT2_ANOMALY: '// ROUTE: ANOMALY HOLD // SECONDARY CLASSIFICATION ATTEMPT',
+  };
+  const branchEl = document.getElementById('act2Branch');
+  if (branchEl) branchEl.textContent = labels[branch] || labels.ACT2_BUILDER;
+  // tone audio cue when the title card appears
+  if (typeof ensureAudio === 'function') { ensureAudio(); tone(440, 0.18, 'sawtooth', 0.05); }
+  document.getElementById('act2Modal').classList.add('show');
+}
+
+// Player clicked PROCEED on the Act II title card → close it and route into the branch.
+function enterAct2() {
+  const m = document.getElementById('act2Modal');
+  if (m) m.classList.remove('show');
+  if (typeof ensureAudio === 'function') { ensureAudio(); clickSound && clickSound(); }
   const branch = 'ACT2_' + (state.classification || 'BUILDER');
   goToNode(branch);
+}
+
+// Make sure the right classification clip is on the eye-feed during Act II / Act III.
+// Safe to call repeatedly — won't restart the video if it's already the right one.
+function ensureClassificationClip() {
+  const map = { BUILDER: '1-Builder.mp4', SILICON: '1-Silicon.mp4', ANOMALY: '1-Anomaly.mp4' };
+  const file = map[state.classification];
+  if (!file) return;
+  const vid = document.getElementById('camVideo');
+  if (!vid) return;
+  const wantUrl = new URL(file, location.href).href;
+  if (vid.currentSrc === wantUrl && !vid.paused && !vid.ended) return;
+  playEndingClip(file);
 }
 
 // Resolve into the right Act III in-narrative node based on the choice's TRACK.
@@ -2135,6 +2176,7 @@ function showAct3Modal(ending, body) {
 }
 function restartGame() {
   document.getElementById('act3Modal').classList.remove('show');
+  const m2 = document.getElementById('act2Modal'); if (m2) m2.classList.remove('show');
   // reset
   state.node = 'START';
   state.threat = 0;
