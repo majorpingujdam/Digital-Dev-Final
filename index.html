@@ -430,7 +430,7 @@
     min-height: 240px;
   }
 
-  .cam-feed {
+  .cam-feed, .cam-video {
     position: absolute;
     top: -8%;
     left: -8%;
@@ -467,22 +467,32 @@
   }
 
   /* per-mode camera behaviour */
-  .surveillance.mode-AGGR .cam-feed {
+  .surveillance.mode-AGGR .cam-feed,
+  .surveillance.mode-AGGR .cam-video {
     animation: camPan 9s ease-in-out infinite alternate, camShake 1.2s linear infinite;
     filter: grayscale(0.2) contrast(1.25) brightness(0.9) saturate(1) hue-rotate(-8deg);
   }
-  .surveillance.mode-GLITCH .cam-feed {
+  .surveillance.mode-GLITCH .cam-feed,
+  .surveillance.mode-GLITCH .cam-video {
     animation: camPan 14s ease-in-out infinite alternate, camJitter 0.35s steps(5) infinite;
     filter: grayscale(0.3) contrast(1.35) brightness(0.82) saturate(0.7);
   }
-  .surveillance.mode-COOP .cam-feed {
+  .surveillance.mode-COOP .cam-feed,
+  .surveillance.mode-COOP .cam-video {
     animation: camPan 28s ease-in-out infinite alternate;
     filter: grayscale(0.55) contrast(1.05) brightness(0.95) saturate(0.85);
   }
-  .surveillance.mode-STABLE .cam-feed {
+  .surveillance.mode-STABLE .cam-feed,
+  .surveillance.mode-STABLE .cam-video {
     animation: camPan 26s ease-in-out infinite alternate;
     filter: grayscale(0.5) contrast(1.05) brightness(0.88) saturate(0.85);
   }
+  /* video-specific tweak: live ending footage looks better with less crush */
+  .cam-video {
+    filter: grayscale(0.25) contrast(1.10) brightness(0.95) saturate(0.95);
+  }
+  .cam-video.playing { z-index: 2; }
+  .cam-feed.suppressed { display: none; }
 
   /* dim mask + vignette so HUD overlays read clearly */
   .surveillance::after {
@@ -1210,6 +1220,7 @@
 
         <div class="surveillance" id="surveillance">
           <img class="cam-feed" id="camFeed" src="feed.gif" alt="" draggable="false">
+          <video class="cam-video" id="camVideo" muted playsinline preload="auto" hidden></video>
           <canvas id="feed"></canvas>
           <div class="feed-overlay">
             <span class="stamp tl" id="feedTL">CAM-NP-17 // STRATUM 7,421</span>
@@ -1864,6 +1875,7 @@ const story = {
   ACT1_END_BUILDER: {
     feed: 'COOP',
     enter: async () => {
+      playEndingClip('1-Builder.mp4');
       appendSpeaker('SYSTEM','');
       await typewriter('// ACT I COMPLETE — PATH: COOPERATION', 'system', 8);
       appendSpeaker('OVERSEER');
@@ -1875,6 +1887,7 @@ const story = {
   ACT1_END_SILICON: {
     feed: 'AGGR',
     enter: async () => {
+      playEndingClip('1-Silicon.mp4');
       appendSpeaker('SYSTEM','');
       await typewriter('// ACT I COMPLETE — PATH: HOSTILE EXTRACTION', 'system', 8);
       appendSpeaker('OVERSEER');
@@ -1886,6 +1899,7 @@ const story = {
   ACT1_END_ANOMALY: {
     feed: 'GLITCH',
     enter: async () => {
+      playEndingClip('1-Anomaly.mp4');
       appendSpeaker('SYSTEM','');
       await typewriter('// ACT I COMPLETE — PATH: ANOMALY HOLD', 'system', 8);
       appendSpeaker('ECHO-7','echo');
@@ -1895,6 +1909,39 @@ const story = {
     choices: []
   },
 };
+
+// ---------- ENDING CLIP PLAYBACK (eye-feed video swap) ----------
+function playEndingClip(file) {
+  const img = document.getElementById('camFeed');
+  const vid = document.getElementById('camVideo');
+  if (!vid) return;
+  // swap GIF → video clip
+  vid.hidden = false;
+  vid.classList.add('playing');
+  vid.loop = true;
+  vid.muted = true;
+  vid.playsInline = true;
+  vid.src = file;
+  if (img) img.classList.add('suppressed');
+  const tryPlay = () => {
+    const p = vid.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {/* autoplay blocked — first user click will resume */});
+  };
+  vid.addEventListener('loadeddata', tryPlay, { once: true });
+  tryPlay();
+}
+function restoreCamFeed() {
+  const img = document.getElementById('camFeed');
+  const vid = document.getElementById('camVideo');
+  if (vid) {
+    try { vid.pause(); } catch(_) {}
+    vid.removeAttribute('src');
+    vid.load && vid.load();
+    vid.hidden = true;
+    vid.classList.remove('playing');
+  }
+  if (img) img.classList.remove('suppressed');
+}
 
 // ---------- ECHO INTERVENE ----------
 async function echoIntervene(lines) {
@@ -1973,6 +2020,7 @@ function restartGame() {
   els.narrative.innerHTML = '';
   els.log.innerHTML = '';
   refreshHUD();
+  if (typeof restoreCamFeed === 'function') restoreCamFeed();
   goToNode('START');
 }
 
