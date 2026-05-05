@@ -2915,10 +2915,10 @@ const entity = {
     }
   }
 
-  // ---- EYE AREA — recessed shadows, no rings, no glowing pupils ----
-  // Subtle scatter of dim "socket" points to suggest the hollow,
-  // plus a single dark pupil-shadow per eye. No bright outline.
+  // ---- EYE AREA — visible eyes but austere
+  // socket scatter (recessed shadow) + thin iris ring + bright pupil focal point
   for (const ex of [-28, 28]) {
+    // recessed socket scatter (subtle dark hollow)
     for (let i = 0; i < 22; i++) {
       const a = (i/22) * Math.PI * 2;
       const r = 9 + Math.random() * 4;
@@ -2930,8 +2930,19 @@ const entity = {
         kind: 'socket'
       });
     }
-    // tiny dark pupil shadow (1 point), barely off-center
-    P.push({ x: ex, y: -22, z: 34, nx:0, ny:0, nz:1, kind: 'pupil', eyeSide: ex < 0 ? -1 : 1 });
+    // iris ring — thin defined eye outline (small, not the bug-eye ring)
+    for (let i = 0; i < 18; i++) {
+      const a = (i/18) * Math.PI * 2;
+      P.push({
+        x: ex + Math.cos(a) * 5.5,
+        y: -22 + Math.sin(a) * 4,
+        z: 36,
+        nx:0, ny:0, nz:1,
+        kind: 'iris'
+      });
+    }
+    // pupil — single bright focal dot
+    P.push({ x: ex, y: -22, z: 38, nx:0, ny:0, nz:1, kind: 'pupil', eyeSide: ex < 0 ? -1 : 1 });
   }
 
   // ---- BROW RIDGE — heavier shading bar above the eyes ----
@@ -3179,12 +3190,18 @@ function entityRender(now) {
     let glowR = 0;
 
     if (p.kind === 'pupil') {
-      // SHADOW pupil — dark recessed dot, no glow
-      size = 1.4 * dpr * p.s;
-      color = '#000';
-      alpha = 0.85;
+      // bright focal eye dot — entity accent color, subtle glow only
+      size = 2.2 * dpr * p.s;
+      color = col.warm;
+      alpha = 1;
+      glowR = 4 * dpr;
+    } else if (p.kind === 'iris') {
+      // thin iris ring — defined but austere
+      size = 1.3 * dpr * p.s;
+      color = col.base;
+      alpha = a * 0.85;
     } else if (p.kind === 'socket' || p.kind === 'eye') {
-      // recessed eye area — very dim, no warm highlight
+      // recessed eye-socket scatter — very dim
       size = 1.0 * dpr * p.s;
       color = col.base;
       alpha = a * 0.18;
