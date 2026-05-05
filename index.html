@@ -1856,7 +1856,10 @@ function glitchText(element, finalText, durationMs=400) {
     element.classList.add('glitching');
     const start = performance.now();
     const len = finalText.length;
-    const tick = (now) => {
+    let done = false;
+    const tick = () => {
+      if (done) return;
+      const now = performance.now();
       const t = (now - start) / durationMs;
       let out = '';
       for (let i=0; i<len; i++) {
@@ -1866,14 +1869,16 @@ function glitchText(element, finalText, durationMs=400) {
       }
       element.textContent = out;
       if (t >= 1) {
+        done = true;
         element.textContent = finalText;
         element.classList.remove('glitching');
         resolve();
         return;
       }
-      requestAnimationFrame(tick);
+      // setTimeout instead of RAF — survives background-tab throttling
+      setTimeout(tick, 32);
     };
-    requestAnimationFrame(tick);
+    tick();
   });
 }
 
@@ -2517,17 +2522,18 @@ async function dropIntegrity(toPct, dur=3500) {
   if (!el) { await new Promise(r => setTimeout(r, dur)); return; }
   const start = performance.now();
   return new Promise(resolve => {
-    const tick = (now) => {
+    const tick = () => {
+      const now = performance.now();
       const t = Math.min(1, (now - start) / dur);
       const v = (99.997 - (99.997 - toPct) * t);
       const display = (Math.random() < 0.18)
-        ? (Math.random()*100).toFixed(2)   // brief glitch flicker
+        ? (Math.random()*100).toFixed(2)
         : v.toFixed(3);
       el.textContent = `// NETSPHERE INTEGRITY ${display}%   // SAFEGUARD :: STRAINED   // OVERSEER :: ERROR`;
-      if (t < 1) requestAnimationFrame(tick);
+      if (t < 1) setTimeout(tick, 60);
       else { el.textContent = `// NETSPHERE INTEGRITY ${toPct.toFixed(1)}%   // OVERSEER :: UNREACHABLE`; resolve(); }
     };
-    requestAnimationFrame(tick);
+    tick();
   });
 }
 function restartGame() {
