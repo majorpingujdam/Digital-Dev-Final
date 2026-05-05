@@ -2915,92 +2915,72 @@ const entity = {
     }
   }
 
-  // ---- EYE SOCKETS (recessed shadow) ----
-  for (const ex of [-30, 30]) {
-    for (let i = 0; i < 36; i++) {
-      const a = (i/36) * Math.PI * 2;
-      const rxE = 16, ryE = 9;
+  // ---- EYE AREA — recessed shadows, no rings, no glowing pupils ----
+  // Subtle scatter of dim "socket" points to suggest the hollow,
+  // plus a single dark pupil-shadow per eye. No bright outline.
+  for (const ex of [-28, 28]) {
+    for (let i = 0; i < 22; i++) {
+      const a = (i/22) * Math.PI * 2;
+      const r = 9 + Math.random() * 4;
       P.push({
-        x: ex + Math.cos(a) * rxE,
-        y: -28 + Math.sin(a) * ryE,
-        z: 30,
-        nx: 0, ny: 0, nz: 1,
+        x: ex + Math.cos(a) * r * 1.4,
+        y: -22 + Math.sin(a) * r * 0.7,
+        z: 32 + Math.random() * 2,
+        nx:0, ny:0, nz:1,
         kind: 'socket'
       });
     }
-    // a few iris dots — small dim cluster
-    for (let i = 0; i < 5; i++) {
-      const a = (i/5) * Math.PI * 2;
-      P.push({
-        x: ex + Math.cos(a)*2.5,
-        y: -28 + Math.sin(a)*2.5,
-        z: 32,
-        nx:0, ny:0, nz:1,
-        kind: 'pupil',
-        eyeSide: ex < 0 ? -1 : 1
-      });
-    }
+    // tiny dark pupil shadow (1 point), barely off-center
+    P.push({ x: ex, y: -22, z: 34, nx:0, ny:0, nz:1, kind: 'pupil', eyeSide: ex < 0 ? -1 : 1 });
   }
 
-  // ---- BROW RIDGE (slight forward bump shading the eyes) ----
-  for (let i = 0; i < 38; i++) {
-    const t = i/37;
-    const x = (t - 0.5) * 96;
+  // ---- BROW RIDGE — heavier shading bar above the eyes ----
+  for (let i = 0; i < 44; i++) {
+    const t = i/43;
+    const x = (t - 0.5) * 92;
+    // slight V-dip at center → angry brow
+    const dip = Math.cos((t - 0.5) * Math.PI) * 2;
     P.push({
       x,
-      y: -42 + Math.abs(t - 0.5) * 4,
-      z: 56 + Math.sin(t*Math.PI) * 6,
-      nx: 0, ny: -0.5, nz: 0.85,
+      y: -38 - dip,
+      z: 54 + Math.sin(t*Math.PI) * 5,
+      nx: 0, ny: -0.55, nz: 0.83,
       kind: 'brow'
     });
   }
 
-  // ---- NOSE BRIDGE + TIP (protruding ridge) ----
-  for (let i = 0; i < 18; i++) {
-    const t = i/17;
-    const z = 56 + t * 14;
-    P.push({ x: 0, y: -32 + t * 46, z, nx:0, ny:-0.35, nz:0.94, kind: 'nose' });
-  }
-  // nose wings
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < 7; i++) {
-      const t = i/6;
-      P.push({
-        x: side * (3 + t*5),
-        y: 10 + t*4,
-        z: 60 - t*2,
-        nx: side*0.5, ny:0, nz: 0.86,
-        kind: 'nose'
-      });
-    }
+  // ---- NOSE BRIDGE + TIP (long, thin, dim) ----
+  for (let i = 0; i < 24; i++) {
+    const t = i/23;
+    const z = 54 + t * 16;
+    P.push({ x: 0, y: -34 + t * 50, z, nx:0, ny:-0.35, nz:0.94, kind: 'nose' });
   }
 
-  // ---- CHEEKBONES (catch the light) ----
+  // ---- CHEEKBONES (subtle, slightly recessed) ----
   for (const side of [-1, 1]) {
-    for (let i = 0; i < 18; i++) {
-      const t = i/17;
+    for (let i = 0; i < 20; i++) {
+      const t = i/19;
       P.push({
-        x: side * (32 + t*10),
-        y: -2 + t*16,
-        z: 50 - t*6,
+        x: side * (30 + t*12),
+        y: -4 + t*18,
+        z: 48 - t*8,
         nx: side*0.7, ny:0, nz:0.7,
         kind: 'cheek'
       });
     }
   }
 
-  // ---- CLOSED LIPS (serious, neutral, slight downturn) ----
-  for (let i = 0; i < 36; i++) {
-    const t = i/35;
-    const x = (t - 0.5) * 52;
-    const dy = Math.abs(t - 0.5) * 5; // corners slightly lower
+  // ---- CLOSED LIPS — single thin straight line, no smile arc ----
+  for (let i = 0; i < 32; i++) {
+    const t = i/31;
+    const x = (t - 0.5) * 44;
     P.push({
       x,
-      y: 38 + dy,
+      y: 38,           // perfectly flat
       z: 50,
       nx: 0, ny: 0, nz: 1,
       kind: 'lips',
-      baseY: 38 + dy,
+      baseY: 38,
       mouthT: t
     });
   }
@@ -3121,26 +3101,30 @@ function entityRender(now) {
   // glitch chance for alert/high-threat
   const glitch = Math.min(1, (state.threat || 0) / 110);
 
-  // pre-compute mouth sway phases
-  const mouthPhase = now * 0.018;
-  const mouthOpen = entity.speakAmp * (8 + Math.sin(now*0.012)*3);
+  // pre-compute mouth sway phases — very subtle when speaking
+  const mouthPhase = now * 0.022;
+  const mouthOpen = entity.speakAmp * (1.6 + Math.sin(now*0.012) * 0.4);
 
   // collect projected points
   const proj = [];
   for (const p of entity.points) {
     let { x, y, z } = p;
-    // mouth speak displacement
-    if (p.kind === 'mouthL') {
-      y = p.baseY + Math.sin(p.mouthT * Math.PI) * (mouthOpen + Math.sin(mouthPhase + p.mouthT*5) * entity.speakAmp * 2);
+    // lips speak displacement — barely separates, no gape
+    if (p.kind === 'lips') {
+      // alternating tiny offset across the line, scaled by speakAmp
+      const phase = Math.sin(mouthPhase + p.mouthT * 4) * mouthOpen;
+      y = p.baseY + phase * 0.6;
+    } else if (p.kind === 'mouthL') {
+      y = p.baseY + Math.sin(p.mouthT * Math.PI) * mouthOpen * 0.9;
     } else if (p.kind === 'mouthU') {
-      y = p.baseY - Math.sin(p.mouthT * Math.PI) * (mouthOpen * 0.35);
+      y = p.baseY - Math.sin(p.mouthT * Math.PI) * mouthOpen * 0.3;
     }
-    // pupil tracking — pupils glance toward cursor
+    // pupil — anchor at fixed eye position, only minimal glance toward cursor
     if (p.kind === 'pupil') {
-      const gx = Math.max(-3, Math.min(3, dx / 60));
-      const gy = Math.max(-3, Math.min(3, dy / 60));
-      x = (p.eyeSide < 0 ? -30 : 30) + Math.cos(Math.atan2(p.y - (-16), p.x - (p.eyeSide<0?-30:30))) * 3 + gx;
-      y = -16 + gy;
+      const gx = Math.max(-2, Math.min(2, dx / 90));
+      const gy = Math.max(-2, Math.min(2, dy / 90));
+      x = (p.eyeSide < 0 ? -28 : 28) + gx;
+      y = -22 + gy;
     }
     // glitch jitter (general, threat-driven)
     if (glitch > 0 && Math.random() < glitch * 0.12) {
@@ -3189,40 +3173,53 @@ function entityRender(now) {
   for (const p of proj) {
     const depthN = (p.depth + 90) / 180; // ~0..1
     const a = Math.max(0.06, Math.min(1, depthN * 1.0));
-    let size = 1.4 * dpr * p.s;
+    let size = 1.2 * dpr * p.s;
     let color = col.base;
-    let alpha = a * 0.85;
+    let alpha = a * 0.7;
     let glowR = 0;
 
     if (p.kind === 'pupil') {
-      size = 2.4 * dpr * p.s;
-      color = '#fff';
-      alpha = 1;
-      glowR = 8 * dpr;
-    } else if (p.kind === 'eye') {
-      color = col.warm;
-      alpha = 0.85 * a;
-      size = 1.6 * dpr * p.s;
+      // SHADOW pupil — dark recessed dot, no glow
+      size = 1.4 * dpr * p.s;
+      color = '#000';
+      alpha = 0.85;
+    } else if (p.kind === 'socket' || p.kind === 'eye') {
+      // recessed eye area — very dim, no warm highlight
+      size = 1.0 * dpr * p.s;
+      color = col.base;
+      alpha = a * 0.18;
     } else if (p.kind === 'brow') {
-      size = 1.8 * dpr * p.s;
+      size = 1.4 * dpr * p.s;
       color = col.base;
-      alpha = a;
-    } else if (p.kind === 'mouthU' || p.kind === 'mouthL') {
+      alpha = a * 0.85;
+    } else if (p.kind === 'lips' || p.kind === 'mouthU' || p.kind === 'mouthL') {
+      // thin closed line, never glowing — just slight emphasis when speaking
+      size = 1.3 * dpr * p.s;
       color = col.base;
-      size = 1.7 * dpr * p.s;
-      alpha = 0.8 + entity.speakAmp * 0.2;
-      if (entity.speaking) glowR = 6 * dpr;
+      alpha = (0.55 + entity.speakAmp * 0.15) * a;
+    } else if (p.kind === 'nose') {
+      size = 1.3 * dpr * p.s;
+      color = col.base;
+      alpha = a * 0.75;
     } else if (p.kind === 'skull' || p.kind === 'jaw') {
       color = col.base;
-      alpha = a * 0.9;
-      size = 1.6 * dpr * p.s;
-    } else if (p.kind === 'shell' || p.kind === 'cheek') {
+      alpha = a * 0.78;
+      size = 1.3 * dpr * p.s;
+    } else if (p.kind === 'shell') {
       color = col.base;
       alpha = a * 0.55;
-      size = 1.2 * dpr * p.s;
+      size = 1.05 * dpr * p.s;
+    } else if (p.kind === 'cheek') {
+      color = col.base;
+      alpha = a * 0.5;
+      size = 1.05 * dpr * p.s;
+    } else if (p.kind === 'dust') {
+      color = col.base;
+      alpha = a * 0.32;
+      size = 0.9 * dpr * p.s;
     } else {
       color = col.base;
-      alpha = a * 0.9;
+      alpha = a * 0.7;
     }
 
     if (glowR > 0) {
