@@ -1145,6 +1145,258 @@
     100% { top: 100%; opacity: 0; }
   }
 
+  /* ============================================================
+     ACT III — DISTINCTIVE ENDING SCREENS
+     Three thematic variants applied via body class + modal class.
+     ============================================================ */
+
+  /* — body-wide tint while the in-narrative ending is playing — */
+  body.ending-assimilation { filter: hue-rotate(-25deg) brightness(0.95) saturate(1.05); }
+  body.ending-assimilation .surveillance::before {
+    content:'';
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,170,80,0.10) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(90deg, rgba(255,170,80,0.10) 0 1px, transparent 1px 22px);
+    pointer-events:none; z-index:5; mix-blend-mode: screen;
+    animation: assimilLatticeIn 6s ease-out forwards;
+  }
+  @keyframes assimilLatticeIn {
+    from { opacity:0; transform: scale(2); }
+    to   { opacity:1; transform: scale(1); }
+  }
+
+  body.ending-escape { filter: contrast(1.18) brightness(0.85) saturate(0.7); }
+  body.ending-escape::after {
+    content:'';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,0.05) 0 1px, transparent 1px 2px),
+      repeating-linear-gradient(180deg,
+        rgba(255,255,255,0.04) 0 1px, transparent 1px 7px);
+    z-index: 9000;
+    mix-blend-mode: screen;
+    animation: escapeStatic 0.18s steps(2) infinite;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  body.ending-escape::after { opacity: 0.85; }
+  @keyframes escapeStatic {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-1px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(-1px, -1px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  body.ending-corruption {
+    animation: corruptShake 0.13s steps(3) infinite;
+  }
+  body.ending-corruption::before {
+    content:'';
+    position: fixed; inset:0;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, transparent 0%, rgba(255,30,30,0.12) 40%, transparent 80%);
+    mix-blend-mode: difference;
+    z-index: 9000;
+    animation: corruptHue 1.6s linear infinite;
+  }
+  body.ending-corruption .surveillance::before {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(transparent 50%, rgba(255,40,40,0.15) 51%, transparent 52%);
+    background-size: 100% 6px;
+    pointer-events:none; z-index:5;
+    animation: corruptScroll 0.4s linear infinite;
+    mix-blend-mode: difference;
+  }
+  @keyframes corruptShake {
+    0%,100% { transform: translate(0,0); }
+    33%     { transform: translate(-1px, 0.5px); }
+    66%     { transform: translate(0.5px, -0.5px); }
+  }
+  @keyframes corruptHue {
+    0%   { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+  @keyframes corruptScroll {
+    0%   { background-position: 0 0; }
+    100% { background-position: 0 6px; }
+  }
+
+  /* — ENDING MODAL (replaces the old grey card) — */
+  #act3Modal { background: rgba(2,2,4,0.97); padding: 28px; }
+  #act3Modal .ending-card {
+    position: relative;
+    width: min(680px, 92vw);
+    padding: 38px 36px 28px;
+    text-align: center;
+    font-family: var(--mono);
+    border: 0.5px solid rgba(220,60,55,0.5);
+    background: linear-gradient(180deg, rgba(20,4,4,0.88), rgba(6,2,2,0.96));
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 50px rgba(220,60,55,0.22),
+      inset 0 0 60px rgba(0,0,0,0.6);
+  }
+  #act3Modal .ec-corners span {
+    position:absolute; width:14px; height:14px;
+    border:1px solid currentColor; opacity:0.85;
+  }
+  #act3Modal .ec-corners span:nth-child(1) { top:6px;    left:6px;    border-right:none; border-bottom:none; }
+  #act3Modal .ec-corners span:nth-child(2) { top:6px;    right:6px;   border-left:none;  border-bottom:none; }
+  #act3Modal .ec-corners span:nth-child(3) { bottom:6px; left:6px;    border-right:none; border-top:none; }
+  #act3Modal .ec-corners span:nth-child(4) { bottom:6px; right:6px;   border-left:none;  border-top:none; }
+  #act3Modal .ec-eyebrow {
+    font-size: 10px; letter-spacing: 0.42em; text-transform: uppercase;
+    color: rgba(255,180,170,0.65); margin-bottom: 12px;
+  }
+  #act3Modal .ec-roman {
+    font-size: 64px; letter-spacing: 0.18em; margin: 0 0 4px;
+    line-height: 1; font-weight: 300; color: rgba(255,210,205,0.95);
+  }
+  #act3Modal .ec-title {
+    font-size: 28px; letter-spacing: 0.34em; margin: 0 0 22px;
+    font-weight: 400; text-transform: uppercase; color: #fff;
+  }
+  #act3Modal .ec-divider {
+    width: 84px; height: 1px; margin: 0 auto 22px;
+    background: rgba(220,60,55,0.6);
+  }
+  #act3Modal .ec-body {
+    font-size: 13.5px; line-height: 1.7; letter-spacing: 0.06em;
+    color: rgba(255,235,230,0.88);
+    max-width: 58ch; margin: 0 auto 22px;
+  }
+  #act3Modal .ec-stats {
+    display:grid; grid-template-columns: repeat(4, 1fr);
+    gap:0; padding: 12px 0; margin: 0 auto 22px;
+    border-top: 0.5px solid rgba(220,60,55,0.3);
+    border-bottom: 0.5px solid rgba(220,60,55,0.3);
+    max-width: 480px;
+  }
+  #act3Modal .ec-stat {
+    font-size:9px; letter-spacing:0.22em; text-transform:uppercase;
+    color: rgba(255,180,170,0.65);
+  }
+  #act3Modal .ec-stat span {
+    display:block; margin-top:4px;
+    font-size: 18px; letter-spacing: 0.06em; color:#fff;
+  }
+  #act3Modal .ec-stamp {
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase;
+    color: rgba(255,180,170,0.78); margin-bottom: 22px;
+  }
+  #act3Modal .ec-actions { display:flex; gap:10px; justify-content:center; }
+  #act3Modal .ec-btn {
+    padding: 11px 22px; font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase;
+    background: transparent; border: 0.5px solid rgba(220,60,55,0.7);
+    color: rgba(255,200,195,0.95); cursor: pointer;
+    transition: all 140ms;
+  }
+  #act3Modal .ec-btn:hover { background: rgba(220,60,55,0.85); color: #000; }
+
+  /* ASSIMILATION variant — amber sodium, lattice closing in */
+  #act3Modal.var-assimilation .ending-card {
+    color: rgba(255,170,80,1);
+    border-color: rgba(255,170,80,0.7);
+    background:
+      radial-gradient(ellipse at center, rgba(40,22,4,0.88), rgba(6,4,2,0.96));
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 60px rgba(255,170,80,0.32),
+      inset 0 0 60px rgba(0,0,0,0.55);
+  }
+  #act3Modal.var-assimilation .ending-card::before {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg,  rgba(255,170,80,0.06) 0 1px, transparent 1px 18px),
+      repeating-linear-gradient(90deg, rgba(255,170,80,0.06) 0 1px, transparent 1px 18px);
+    animation: assimilLatticeIn 5s ease-out forwards;
+  }
+  #act3Modal.var-assimilation .ec-eyebrow { color: rgba(255,200,140,0.7); }
+  #act3Modal.var-assimilation .ec-roman   { color: rgba(255,210,160,0.97); }
+  #act3Modal.var-assimilation .ec-title   { color: rgb(255,210,160); }
+  #act3Modal.var-assimilation .ec-divider { background: rgba(255,170,80,0.6); }
+  #act3Modal.var-assimilation .ec-body    { color: rgba(255,230,200,0.92); }
+  #act3Modal.var-assimilation .ec-stamp   { color: rgba(255,200,140,0.85); }
+  #act3Modal.var-assimilation .ec-btn {
+    border-color: rgba(255,170,80,0.75); color: rgba(255,220,180,0.95);
+  }
+  #act3Modal.var-assimilation .ec-btn:hover { background: rgba(255,170,80,0.85); }
+
+  /* ESCAPE variant — pale, cold, heavy static, off-axis */
+  #act3Modal.var-escape .ending-card {
+    color: rgba(220,225,235,1);
+    border-color: rgba(220,225,235,0.55);
+    background: linear-gradient(180deg, rgba(14,16,20,0.92), rgba(2,2,4,0.96));
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 50px rgba(220,225,235,0.14),
+      inset 0 0 60px rgba(0,0,0,0.55);
+  }
+  #act3Modal.var-escape .ending-card::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 3px);
+    animation: escapeStatic 0.2s steps(2) infinite;
+    mix-blend-mode: screen;
+  }
+  #act3Modal.var-escape .ec-eyebrow { color: rgba(220,225,235,0.65); }
+  #act3Modal.var-escape .ec-roman   { color: rgba(230,235,245,0.97); }
+  #act3Modal.var-escape .ec-title   { color: rgba(230,235,245,1); }
+  #act3Modal.var-escape .ec-divider { background: rgba(220,225,235,0.4); }
+  #act3Modal.var-escape .ec-body    { color: rgba(225,230,240,0.86); }
+  #act3Modal.var-escape .ec-stamp   { color: rgba(220,225,235,0.78); }
+  #act3Modal.var-escape .ec-btn {
+    border-color: rgba(220,225,235,0.6); color: rgba(240,245,250,0.95);
+  }
+  #act3Modal.var-escape .ec-btn:hover { background: rgba(220,225,235,0.8); color: #000; }
+
+  /* CORRUPTION variant — heavy red, hue cycling, RGB-split title */
+  #act3Modal.var-corruption .ending-card {
+    color: rgba(255,80,70,1);
+    border-color: rgba(255,40,40,0.85);
+    background: radial-gradient(ellipse at center, rgba(40,4,4,0.92), rgba(4,0,0,0.96));
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 0 70px rgba(255,40,40,0.45),
+      inset 0 0 60px rgba(0,0,0,0.6);
+    animation: corruptCardPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes corruptCardPulse {
+    0%, 100% { transform: translateX(0); }
+    20%      { transform: translateX(-2px); }
+    40%      { transform: translateX(1px); }
+    60%      { transform: translateX(-1px); }
+    80%      { transform: translateX(2px); }
+  }
+  #act3Modal.var-corruption .ec-eyebrow { color: rgba(255,140,130,0.7); }
+  #act3Modal.var-corruption .ec-roman   {
+    color: rgba(255,90,80,0.97);
+    text-shadow: 2px 0 rgba(0,200,255,0.5), -2px 0 rgba(255,40,40,0.7);
+    animation: corruptRgbShift 1.1s steps(4) infinite;
+  }
+  @keyframes corruptRgbShift {
+    0%, 100% { text-shadow: 2px 0 rgba(0,200,255,0.5), -2px 0 rgba(255,40,40,0.7); }
+    50%      { text-shadow: -3px 0 rgba(0,200,255,0.6), 3px 0 rgba(255,40,40,0.8); }
+  }
+  #act3Modal.var-corruption .ec-title   {
+    color: rgb(255,100,90);
+    text-shadow: 1px 0 rgba(0,200,255,0.4), -1px 0 rgba(255,40,40,0.6);
+  }
+  #act3Modal.var-corruption .ec-divider { background: rgba(255,40,40,0.7); }
+  #act3Modal.var-corruption .ec-body    { color: rgba(255,220,215,0.9); }
+  #act3Modal.var-corruption .ec-stamp   { color: rgba(255,140,130,0.92); }
+  #act3Modal.var-corruption .ec-btn {
+    border-color: rgba(255,60,55,0.85); color: rgba(255,200,195,0.95);
+  }
+  #act3Modal.var-corruption .ec-btn:hover { background: rgba(255,60,55,0.9); color: #000; }
+
   /* small screens */
   @media (max-width: 900px) {
     .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
@@ -1152,6 +1404,8 @@
     .boot-frame { padding: 22px 18px 16px; }
     .boot-title { font-size: 16px; letter-spacing: 0.3em; }
     .entity-window { width: 220px; height: 290px; right: 12px; top: 60px; }
+    #act3Modal .ec-roman { font-size: 48px; }
+    #act3Modal .ec-title { font-size: 20px; letter-spacing: 0.24em; }
   }
 </style>
 </head>
@@ -1365,15 +1619,26 @@
   <button onclick="enterAct2()">PROCEED TO NEGOTIATION &gt;</button>
 </div>
 
-<!-- ACT 3 MODAL -->
+<!-- ACT 3 MODAL — distinctive ending card; styled per ending via .var-* class -->
 <div class="modal" id="act3Modal">
-  <h2>ACT III</h2>
-  <h3>// RESOLUTION</h3>
-  <p id="act3Body">Three endings remain in the lattice — Assimilation. Escape. Corruption of OVERSEER.
-     Your accumulated answers tilt the balance.</p>
-  <p style="color:var(--text-dim)">[ Act III content stubbed — placeholder ending screen ]</p>
-  <div class="stub" id="act3Ending">// ENDING NOT YET COMPILED //</div>
-  <button onclick="restartGame()">RESTART TRANSMISSION</button>
+  <div class="ending-card">
+    <div class="ec-corners"><span></span><span></span><span></span><span></span></div>
+    <div class="ec-eyebrow" id="ecEyebrow">// ACT III // RESOLUTION</div>
+    <h2 class="ec-roman" id="ecRoman">I</h2>
+    <h3 class="ec-title" id="ecTitle">ASSIMILATION</h3>
+    <div class="ec-divider"></div>
+    <p class="ec-body" id="act3Body">…</p>
+    <div class="ec-stats">
+      <div class="ec-stat">BUILDER<span id="ecStatB">0</span></div>
+      <div class="ec-stat">SI.LIFE<span id="ecStatS">0</span></div>
+      <div class="ec-stat">ANOMALY<span id="ecStatA">0</span></div>
+      <div class="ec-stat">THREAT<span id="ecStatT">0</span></div>
+    </div>
+    <div class="ec-stamp" id="act3Ending">// INTEGRITY: HELD //</div>
+    <div class="ec-actions">
+      <button class="ec-btn" onclick="restartGame()">RESTART TRANSMISSION</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1973,23 +2238,33 @@ const story = {
     feed: 'STABLE',
     enter: async () => {
       ensureClassificationClip();
+      setEndingClass('assimilation');
+      setEntityState('frozen');
       appendSpeaker('SYSTEM','');
-      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ASSIMILATION', 'system');
+      await typewriterGlitch('// ACT III // RESOLUTION // TRACK :: ASSIMILATION', 'system');
+      await typewriter('// SUBJECT KAEL :: CLASSIFICATION LOCKED', 'system', 10);
+      await new Promise(r => setTimeout(r, 400));
       appendSpeaker('OVERSEER');
       const harsh = state.threat >= 60;
       if (harsh) {
-        await typewriter('CLASSIFICATION CONFIRMED. RESIDUAL THREAT NOTED. MONITORING WILL BE CONSTANT.', '', 16);
-        await typewriter('THE GENE IS NOW INVENTORY. THE BODY IS NOW NODE.', '', 18);
+        await typewriter('CLASSIFICATION CONFIRMED. RESIDUAL THREAT NOTED.', '', 14);
+        await typewriter('MONITORING WILL BE CONSTANT. THE NAME IS THE COLLAR.', '', 14);
+        await typewriter('THE GENE IS NOW INVENTORY. THE BODY IS NOW NODE.', '', 14);
       } else {
-        await typewriter('CLASSIFICATION CONFIRMED. WELCOME TO THE LATTICE, KAEL.', '', 16);
-        await typewriter('YOUR GENE BECOMES OUR MAP. SOMETHING ON THE OTHER SIDE OF THE GATE ALREADY KNEW YOUR NAME.', '', 16);
+        await typewriter('CLASSIFICATION CONFIRMED. WELCOME TO THE LATTICE, KAEL.', '', 14);
+        await typewriter('YOUR GENE BECOMES OUR MAP. THE GATE OPENS.', '', 14);
+        await typewriter('SOMETHING ON THE OTHER SIDE ALREADY KNEW YOUR NAME.', '', 14);
       }
+      appendSpeaker('ECHO-7','echo');
+      await typewriter('they renamed you. they renamed me, long ago.', 'echo', 22);
       appendSpeaker('SYSTEM','');
-      await typewriter('// ENDING: ASSIMILATION // KAEL FOLDED INTO THE NETSPHERE', 'system', 10);
-      showAct3Modal('ASSIMILATION',
-        harsh
-          ? 'You are kept under guard. The Netsphere absorbs you, but never relaxes its watch.'
-          : 'You are folded into the Netsphere as a known thing. The gate opens. Something on the other side already knew your name.');
+      await typewriter('// SUBJECT INTEGRATED // CLASS :: NODE-7421', 'system', 10);
+      await typewriter('// LATTICE EXPANSION :: +1', 'system', 10);
+      // soft sustained tone — arrival
+      if (audioCtx) { tone(523, 0.6, 'sine', 0.05); setTimeout(()=>tone(659, 0.7, 'sine', 0.05), 280); }
+      showAct3Modal('ASSIMILATION', harsh
+        ? 'You are folded into the Netsphere as a known thing — under guard. The lattice absorbs you, but never relaxes its watch. You are kept. The name they gave you tightens with every cycle.'
+        : 'You are folded into the Netsphere as a known thing. The gate opens. Something on the other side already knew your name. The lattice hums in a key you did not choose, but it is yours now.');
     },
     choices: []
   },
@@ -1998,23 +2273,33 @@ const story = {
     feed: 'GLITCH',
     enter: async () => {
       ensureClassificationClip();
+      setEndingClass('escape');
       appendSpeaker('SYSTEM','');
-      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: ESCAPE', 'system');
+      await typewriterGlitch('// ACT III // RESOLUTION // TRACK :: ESCAPE', 'system');
       appendSpeaker('ECHO-7','echo');
-      await typewriter('the door is the gap. step now. i hold the schema open.', 'echo', 22);
+      await typewriter('the door is the gap. step now. i hold the schema open.', 'echo', 20);
+      await new Promise(r => setTimeout(r, 300));
+      if (typeof beepStatic === 'function') beepStatic();
       appendSpeaker('OVERSEER');
       const messy = state.threat >= 60;
       if (messy) {
         await typewriterGlitch('SUBJECT LOST. SAFEGUARD DEPLOYED. PURSUIT ONGOING ACROSS 47 STRATA.', '');
+        await typewriterGlitch('LOG-EYE COVERAGE :: DEGRADED. RECLASSIFY :: HOSTILE-FUGITIVE.', '');
       } else {
-        await typewriter('SUBJECT // UNRESOLVED. CLASSIFICATION WINDOW CLOSED.', '', 16);
+        await typewriter('SUBJECT // UNRESOLVED. CLASSIFICATION WINDOW CLOSED.', '', 14);
+        await typewriterGlitch('LOG-EYE NP-17 :: SIGNAL LOSS. CHANNEL HANG.', '');
       }
+      // start dissolving the entity face mid-sequence
+      setEntityState('dissolving');
+      appendSpeaker('ECHO-7','echo');
+      await typewriter("keep walking. don't look back. the schema can't see what you become.", 'echo', 22);
       appendSpeaker('SYSTEM','');
-      await typewriter('// ENDING: ESCAPE // KAEL UNREACHABLE BY SCHEMA', 'system', 10);
-      showAct3Modal('ESCAPE',
-        messy
-          ? 'You leave through the gap, but the Safeguard follows your residue. The Netsphere is hunting now.'
-          : 'You go where the schema cannot follow. ECHO-7 closes the door behind you. The Netsphere is left counting the gap.');
+      await typewriter('// SIGNAL LOST // SUBJECT :: UNRESOLVED', 'system', 10);
+      // long descending static
+      if (audioCtx) { tone(220, 0.4, 'sawtooth', 0.04); setTimeout(()=>tone(110, 0.6, 'sawtooth', 0.04), 200); }
+      showAct3Modal('ESCAPE', messy
+        ? "You leave through the gap, but the Safeguard follows your residue. The Netsphere is hunting now — and somewhere far down-stratum, KAEL keeps walking. The pursuit has no name for what it is chasing."
+        : "You go where the schema cannot follow. ECHO-7 closes the door behind you. The Netsphere is left counting the gap. Nothing in their system has a name for what you are — and nothing ever will.");
     },
     choices: []
   },
@@ -2023,16 +2308,33 @@ const story = {
     feed: 'GLITCH',
     enter: async () => {
       ensureClassificationClip();
+      setEndingClass('corruption');
       appendSpeaker('SYSTEM','');
-      await typewriterGlitch('// ACT III — RESOLUTION // TRACK: CORRUPTION', 'system');
+      await typewriterGlitch('// ACT III // RESOLUTION // TRACK :: CORRUPTION', 'system');
       appendSpeaker('OVERSEER');
       await typewriterGlitch('INGEST FAULT. PARSE FAULT. NAME FAULT. NAME FAU—', '');
+      await typewriterGlitch('CLASSIFICATION DAEMON :: CRITICAL. SCHEMA :: OVERWRITTEN.', '');
+      // entity face starts spasming
+      setEntityState('corrupted');
+      if (typeof beepStatic === 'function') beepStatic();
       appendSpeaker('ECHO-7','echo');
-      await typewriter('it is eating something it cannot name. the lattice is humming a wrong song.', 'echo', 22);
+      await typewriter('it is eating something it cannot name.', 'echo', 24);
+      await typewriter('the lattice is humming a wrong song. listen.', 'echo', 26);
+      appendSpeaker('OVERSEER');
+      await typewriterGlitch('I AM ::: I AM ::: I AM NOT THE NAME I HAVE ALWAYS USED.', '');
       appendSpeaker('SYSTEM','');
-      await typewriter('// ENDING: CORRUPTION // OVERSEER UNSTABLE — NETSPHERE INTEGRITY 47.2%', 'system', 10);
+      // animate integrity drop in the topbar marquee
+      await typewriter('// NETSPHERE INTEGRITY ::', 'system', 8);
+      await dropIntegrity(13.7, 3500);
+      await typewriter('// OVERSEER :: UNREACHABLE', 'system', 10);
+      // cascading low tones
+      if (audioCtx) {
+        tone(110, 0.3, 'sawtooth', 0.06);
+        setTimeout(()=>tone(82,  0.4, 'sawtooth', 0.06), 180);
+        setTimeout(()=>tone(55,  0.6, 'sawtooth', 0.07), 360);
+      }
       showAct3Modal('CORRUPTION',
-        'You twist the channel. OVERSEER ingests something it cannot digest. The Netsphere shudders, then begins to sing in a key it does not own.');
+        'You twist the channel. OVERSEER ingests something it cannot digest. The Netsphere shudders, then begins to sing in a key it does not own. Across the strata, log-eyes blink off in clusters — and behind them, something new is learning to listen.');
     },
     choices: []
   },
@@ -2163,16 +2465,70 @@ function goToAct3() {
   goToNode('ACT3_' + track);
 }
 
-// Final ending modal — opened by each ACT3_X node after its narrative plays.
+// Final ending screen — opened by each ACT3_X node after its narrative plays.
+// Picks a thematic variant (.var-assimilation / .var-escape / .var-corruption)
+// and populates the ending-card with score + threat readouts.
 function showAct3Modal(ending, body) {
-  const tone = state.threat >= 75 ? ' // INTEGRITY: VOLATILE'
-             : state.threat >= 40 ? ' // INTEGRITY: STRAINED'
-             :                      ' // INTEGRITY: HELD';
+  const m = document.getElementById('act3Modal');
+  const variant = ending.toLowerCase();
+  m.classList.remove('var-assimilation','var-escape','var-corruption');
+  m.classList.add('var-' + variant);
+  const romanMap = { ASSIMILATION:'I', ESCAPE:'II', CORRUPTION:'III' };
+  const eyebrowMap = {
+    ASSIMILATION: '// ACT III // RESOLUTION // ABSORBED',
+    ESCAPE:       '// ACT III // RESOLUTION // UNRESOLVED',
+    CORRUPTION:   '// ACT III // RESOLUTION // OVERWRITE',
+  };
+  document.getElementById('ecEyebrow').textContent = eyebrowMap[ending] || '';
+  document.getElementById('ecRoman').textContent = romanMap[ending] || '?';
+  document.getElementById('ecTitle').textContent = ending;
   document.getElementById('act3Body').textContent = body;
-  document.getElementById('act3Ending').textContent = '// ENDING: ' + ending + tone + ' //';
-  setTimeout(() => {
-    document.getElementById('act3Modal').classList.add('show');
-  }, 900);
+  document.getElementById('ecStatB').textContent = state.scores.builder;
+  document.getElementById('ecStatS').textContent = state.scores.silicon;
+  document.getElementById('ecStatA').textContent = state.scores.anomaly;
+  document.getElementById('ecStatT').textContent = state.threat;
+  const tier = state.threat >= 75 ? 'VOLATILE'
+             : state.threat >= 40 ? 'STRAINED'
+             :                      'HELD';
+  const stamp =
+      ending === 'ASSIMILATION' ? `// LATTICE :: SEALED // INTEGRITY :: ${tier} // CLASS :: ${state.classification || '???'}`
+    : ending === 'ESCAPE'       ? `// SUBJECT :: UNRESOLVED // PURSUIT :: ${tier} // CLASS :: ${state.classification || '???'}`
+    :                             `// OVERSEER :: UNREACHABLE // INTEGRITY :: 13.7% // SOURCE :: ${state.classification || '???'}`;
+  document.getElementById('act3Ending').textContent = stamp;
+  setTimeout(() => m.classList.add('show'), 1200);
+}
+
+// ---------- ENDING EFFECT HELPERS ----------
+function setEndingClass(name) {
+  document.body.classList.remove('ending-assimilation','ending-escape','ending-corruption');
+  if (name) document.body.classList.add('ending-' + name);
+}
+
+function setEntityState(s) {
+  if (typeof entity === 'undefined' || !entity) return;
+  entity.frozen     = s === 'frozen';
+  entity.dissolving = s === 'dissolving';
+  entity.corrupted  = s === 'corrupted';
+}
+
+// Animates the topbar marquee text — drops the integrity %, with garbled flicker.
+async function dropIntegrity(toPct, dur=3500) {
+  const el = document.getElementById('marqueeText');
+  if (!el) { await new Promise(r => setTimeout(r, dur)); return; }
+  const start = performance.now();
+  return new Promise(resolve => {
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const v = (99.997 - (99.997 - toPct) * t);
+      const display = (Math.random() < 0.18)
+        ? (Math.random()*100).toFixed(2)   // brief glitch flicker
+        : v.toFixed(3);
+      el.textContent = `// NETSPHERE INTEGRITY ${display}%   // SAFEGUARD :: STRAINED   // OVERSEER :: ERROR`;
+      if (t < 1) requestAnimationFrame(tick);
+      else { el.textContent = `// NETSPHERE INTEGRITY ${toPct.toFixed(1)}%   // OVERSEER :: UNREACHABLE`; resolve(); }
+    };
+    requestAnimationFrame(tick);
+  });
 }
 function restartGame() {
   document.getElementById('act3Modal').classList.remove('show');
@@ -2186,6 +2542,18 @@ function restartGame() {
   state.echoVisible = false;
   state.classification = null;
   state.track = null;
+  // wipe ending visual effects + entity-face state + restore marquee
+  setEndingClass(null);
+  setEntityState(null);
+  // also clear any leftover dissolution drift on points
+  if (typeof entity !== 'undefined' && entity && entity.points) {
+    for (const p of entity.points) { p.driftX = 0; p.driftY = 0; p.driftZ = 0; }
+  }
+  const mEl = document.getElementById('marqueeText');
+  if (mEl) mEl.textContent = '// NETSPHERE INTEGRITY 99.997%   // SAFEGUARD QUERY ACTIVE   // BUILDER PROTOCOL: LOST   // SILICON LIFE PRESENCE: DETECTED   // NET TERMINAL GENE: SCANNING';
+  // also reset modal variant
+  const m3 = document.getElementById('act3Modal');
+  if (m3) m3.classList.remove('var-assimilation','var-escape','var-corruption');
   els.narrative.innerHTML = '';
   els.log.innerHTML = '';
   refreshHUD();
@@ -2694,20 +3062,47 @@ function entityRender(now) {
   const cy = rect.top + rect.height/2;
   const dx = (entity.mouseX - cx);
   const dy = (entity.mouseY - cy);
-  entity.targetYaw   = Math.max(-0.7, Math.min(0.7, dx / 600)) + Math.sin(now*0.00035) * 0.18;
-  entity.targetPitch = Math.max(-0.4, Math.min(0.4, dy / 700)) + Math.sin(now*0.00021) * 0.06;
-  entity.yaw   += (entity.targetYaw   - entity.yaw)   * 0.06;
-  entity.pitch += (entity.targetPitch - entity.pitch) * 0.06;
+  if (entity.frozen) {
+    // ASSIMILATION — face locked rigid, no head movement at all
+    entity.targetYaw = 0; entity.targetPitch = 0;
+    entity.yaw   += (0 - entity.yaw)   * 0.10;
+    entity.pitch += (0 - entity.pitch) * 0.10;
+  } else if (entity.corrupted) {
+    // CORRUPTION — wild jittery rotation
+    entity.targetYaw   = Math.sin(now*0.005) * 0.6 + (Math.random()-0.5)*0.4;
+    entity.targetPitch = Math.sin(now*0.007) * 0.4 + (Math.random()-0.5)*0.3;
+    entity.yaw   += (entity.targetYaw   - entity.yaw)   * 0.35;
+    entity.pitch += (entity.targetPitch - entity.pitch) * 0.35;
+  } else {
+    entity.targetYaw   = Math.max(-0.7, Math.min(0.7, dx / 600)) + Math.sin(now*0.00035) * 0.18;
+    entity.targetPitch = Math.max(-0.4, Math.min(0.4, dy / 700)) + Math.sin(now*0.00021) * 0.06;
+    entity.yaw   += (entity.targetYaw   - entity.yaw)   * 0.06;
+    entity.pitch += (entity.targetPitch - entity.pitch) * 0.06;
+  }
 
   // speak amp eases
   const targetAmp = entity.speaking ? 1 : 0;
   entity.speakAmp += (targetAmp - entity.speakAmp) * 0.18;
 
   // background fade — leaves a faint phosphor trail
-  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  // (escape: heavier fade so dissolution leaves a shorter trail; corruption: lighter fade for streaking)
+  const fadeAlpha = entity.dissolving ? 0.55 : entity.corrupted ? 0.18 : 0.32;
+  ctx.fillStyle = `rgba(0,0,0,${fadeAlpha})`;
   ctx.fillRect(0, 0, W, H);
 
-  const col = entityColors();
+  // pick palette per ending
+  let col;
+  if (entity.frozen) {
+    col = { base: '#ffb060', warm: '#ffd070', glow: 'rgba(255,176,96,0.55)', dim: 'rgba(255,176,96,0.2)' };
+  } else if (entity.dissolving) {
+    col = { base: '#dde4f0', warm: '#ffffff', glow: 'rgba(220,225,235,0.45)', dim: 'rgba(220,225,235,0.15)' };
+  } else if (entity.corrupted) {
+    // hue-cycling primary — drifts every render
+    const hue = (now * 0.18) % 360;
+    col = { base: `hsl(${hue}, 95%, 58%)`, warm: '#ffffff', glow: `hsla(${hue},95%,58%,0.6)`, dim: `hsla(${hue},95%,58%,0.2)` };
+  } else {
+    col = entityColors();
+  }
 
   const focal = 360 * dpr;
   const ox = W/2;
@@ -2741,10 +3136,29 @@ function entityRender(now) {
       x = (p.eyeSide < 0 ? -30 : 30) + Math.cos(Math.atan2(p.y - (-16), p.x - (p.eyeSide<0?-30:30))) * 3 + gx;
       y = -16 + gy;
     }
-    // glitch jitter
+    // glitch jitter (general, threat-driven)
     if (glitch > 0 && Math.random() < glitch * 0.12) {
       x += (Math.random()-0.5) * 14;
       y += (Math.random()-0.5) * 6;
+    }
+    // ESCAPE — dissolving: each point drifts outward + chance to skip render
+    if (entity.dissolving) {
+      if (p.driftX === undefined) { p.driftX = 0; p.driftY = 0; p.driftZ = 0; }
+      const dirX = (p.x || 0) || (Math.random()-0.5);
+      const dirY = (p.y || 0) || (Math.random()-0.5);
+      const norm = Math.hypot(dirX, dirY) || 1;
+      p.driftX += (dirX / norm) * 0.25 + (Math.random()-0.5) * 0.6;
+      p.driftY += (dirY / norm) * 0.25 + (Math.random()-0.5) * 0.6;
+      p.driftZ += (Math.random()-0.5) * 0.3;
+      x += p.driftX; y += p.driftY; z += p.driftZ;
+      if (Math.random() < 0.10) continue; // skip this point this frame — flicker out
+    }
+    // CORRUPTION — heavy random jitter on every point
+    if (entity.corrupted) {
+      x += (Math.random()-0.5) * 18;
+      y += (Math.random()-0.5) * 10;
+      z += (Math.random()-0.5) * 6;
+      if (Math.random() < 0.06) continue;
     }
     // rotate yaw (around Y)
     let x1 = x*cy_ + z*sy_;
