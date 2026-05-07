@@ -1695,85 +1695,93 @@ function ensureAudio() {
   }
 }
 function tone(freq=440, dur=0.07, type='square', vol=0.04) {
-  if (!audioCtx) return;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = type; o.frequency.value = freq;
-  g.gain.value = vol;
-  o.connect(g); g.connect(audioCtx.destination);
-  const t = audioCtx.currentTime;
-  o.start(t);
-  g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.stop(t + dur + 0.02);
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    o.start(t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.stop(t + dur + 0.02);
+  } catch (_) {}
 }
 function hoverSound() {
-  if (!audioCtx) return;
-  const now = audioCtx.currentTime;
-  const o = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  o.type = 'square';
-  o.frequency.setValueAtTime(1700, now);
-  o.frequency.exponentialRampToValueAtTime(900, now + 0.04);
-  g.gain.setValueAtTime(0.022, now);
-  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
-  o.connect(g); g.connect(audioCtx.destination);
-  o.start(now); o.stop(now + 0.06);
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const now = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(1700, now);
+    o.frequency.exponentialRampToValueAtTime(900, now + 0.04);
+    g.gain.setValueAtTime(0.022, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(now); o.stop(now + 0.06);
+  } catch (_) {}
 }
 function clickSound() {
-  if (!audioCtx) return;
-  const now = audioCtx.currentTime;
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const now = audioCtx.currentTime;
 
-  // 1. relay click — short bandpassed noise burst
-  const dur1 = 0.06;
-  const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur1), audioCtx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) {
-    d[i] = (Math.random() * 2 - 1) * Math.exp(-i / d.length * 16);
-  }
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buf;
-  const bp = audioCtx.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.frequency.value = 2400;
-  bp.Q.value = 6;
-  const ng = audioCtx.createGain();
-  ng.gain.value = 0.10;
-  noise.connect(bp); bp.connect(ng); ng.connect(audioCtx.destination);
-  noise.start(now);
+    // 1. relay click — short bandpassed noise burst
+    const dur1 = 0.06;
+    const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur1), audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.exp(-i / d.length * 16);
+    }
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buf;
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 2400;
+    bp.Q.value = 6;
+    const ng = audioCtx.createGain();
+    ng.gain.value = 0.10;
+    noise.connect(bp); bp.connect(ng); ng.connect(audioCtx.destination);
+    noise.start(now);
 
-  // 2. low resonant thud — sub kick
-  const o = audioCtx.createOscillator();
-  const og = audioCtx.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(120, now);
-  o.frequency.exponentialRampToValueAtTime(38, now + 0.16);
-  og.gain.setValueAtTime(0.0001, now);
-  og.gain.exponentialRampToValueAtTime(0.20, now + 0.005);
-  og.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-  o.connect(og); og.connect(audioCtx.destination);
-  o.start(now); o.stop(now + 0.25);
+    // 2. low resonant thud — sub kick
+    const o = audioCtx.createOscillator();
+    const og = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, now);
+    o.frequency.exponentialRampToValueAtTime(38, now + 0.16);
+    og.gain.setValueAtTime(0.0001, now);
+    og.gain.exponentialRampToValueAtTime(0.20, now + 0.005);
+    og.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.connect(og); og.connect(audioCtx.destination);
+    o.start(now); o.stop(now + 0.25);
 
-  // 3. metallic ping — sharp upper transient
-  const o2 = audioCtx.createOscillator();
-  const og2 = audioCtx.createGain();
-  o2.type = 'triangle';
-  o2.frequency.setValueAtTime(2900, now);
-  o2.frequency.exponentialRampToValueAtTime(1100, now + 0.07);
-  og2.gain.setValueAtTime(0.045, now);
-  og2.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-  o2.connect(og2); og2.connect(audioCtx.destination);
-  o2.start(now); o2.stop(now + 0.11);
+    // 3. metallic ping — sharp upper transient
+    const o2 = audioCtx.createOscillator();
+    const og2 = audioCtx.createGain();
+    o2.type = 'triangle';
+    o2.frequency.setValueAtTime(2900, now);
+    o2.frequency.exponentialRampToValueAtTime(1100, now + 0.07);
+    og2.gain.setValueAtTime(0.045, now);
+    og2.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    o2.connect(og2); og2.connect(audioCtx.destination);
+    o2.start(now); o2.stop(now + 0.11);
+  } catch (_) {}
 }
 function beepStatic() {
-  if (!audioCtx) return;
-  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.4, audioCtx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) * 0.6;
-  const src = audioCtx.createBufferSource();
-  const g = audioCtx.createGain(); g.gain.value = 0.06;
-  src.buffer = buf; src.connect(g); g.connect(audioCtx.destination);
-  src.start();
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  try {
+    const buf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.4, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length) * 0.6;
+    const src = audioCtx.createBufferSource();
+    const g = audioCtx.createGain(); g.gain.value = 0.06;
+    src.buffer = buf; src.connect(g); g.connect(audioCtx.destination);
+    src.start();
+  } catch (_) {}
 }
 
 // ---------- TYPEWRITER ----------
@@ -1809,35 +1817,61 @@ function typewriter(text, cls='', speed=18) {
     cursor.className = 'cursor';
     div.appendChild(cursor);
     let i = 0;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try { if (cursor.parentNode) cursor.remove(); } catch(_) {}
+      try { scrollNarrativeBottom(); } catch(_) {}
+      typingActive = false;
+      resolve();
+    };
+    // hard safety net — if for any reason ticks stop firing, never leave the
+    // narrative permanently stuck. Generous budget: 60ms per char + 4s slack.
+    const safety = setTimeout(() => {
+      if (finished) return;
+      try {
+        if (i < text.length) {
+          const remaining = document.createTextNode(text.slice(i));
+          div.insertBefore(remaining, cursor);
+        }
+      } catch(_) {}
+      finish();
+    }, Math.max(4000, text.length * 60));
     const tick = () => {
-      if (skipRequested) {
-        cursor.remove();
-        div.firstChild ? null : null;
-        // place all remaining text
-        const txt = document.createTextNode(text.slice(i));
-        div.insertBefore(txt, cursor);
-        if (cursor.parentNode) cursor.remove();
+      try {
+        if (skipRequested) {
+          const txt = document.createTextNode(text.slice(i));
+          div.insertBefore(txt, cursor);
+          skipRequested = false;
+          clearTimeout(safety);
+          finish();
+          return;
+        }
+        if (i >= text.length) {
+          clearTimeout(safety);
+          finish();
+          return;
+        }
+        const c = text.charAt(i);
+        div.insertBefore(document.createTextNode(c), cursor);
+        i++;
+        // tiny click sound — wrapped so audio errors can't ever stall us
+        if (Math.random() < 0.04) {
+          try { tone(2200 + Math.random()*400, 0.005, 'square', 0.012); } catch(_) {}
+        }
         scrollNarrativeBottom();
-        skipRequested = false;
-        typingActive = false;
-        resolve();
-        return;
+        setTimeout(tick, c === ' ' ? speed*0.6 : speed + Math.random()*8);
+      } catch (e) {
+        // Any unexpected DOM/audio error: dump the rest of the text and resolve
+        // so the story chain (await typewriter…) never hangs.
+        try {
+          const remaining = document.createTextNode(text.slice(i));
+          div.insertBefore(remaining, cursor);
+        } catch(_) {}
+        clearTimeout(safety);
+        finish();
       }
-      if (i >= text.length) {
-        cursor.remove();
-        scrollNarrativeBottom();
-        typingActive = false;
-        resolve();
-        return;
-      }
-      const c = text.charAt(i);
-      const t = document.createTextNode(c);
-      div.insertBefore(t, cursor);
-      i++;
-      // tiny click sound on alphanumeric, very subtle
-      if (Math.random() < 0.04) tone(2200 + Math.random()*400, 0.005, 'square', 0.012);
-      scrollNarrativeBottom();
-      setTimeout(tick, c === ' ' ? speed*0.6 : speed + Math.random()*8);
     };
     tick();
   });
@@ -1883,14 +1917,22 @@ function glitchText(element, finalText, durationMs=400) {
 }
 
 async function typewriterGlitch(text, cls='', speed=18) {
-  // type with brief glitch on first segment
+  // type with brief glitch on first segment, with safety net so a hang in
+  // glitchText (RAF/audio/DOM) can never strand the narrative.
   const div = appendLine(cls);
-  await glitchText(div, text.slice(0, Math.min(20, text.length)), 350);
-  // then type the rest
+  try {
+    await Promise.race([
+      glitchText(div, text.slice(0, Math.min(20, text.length)), 350),
+      new Promise(r => setTimeout(r, 1200)),  // hard ceiling
+    ]);
+  } catch (_) {}
+  try { div.textContent = text.slice(0, Math.min(20, text.length)); } catch (_) {}
   let typed = div.textContent;
   for (let i = typed.length; i < text.length; i++) {
-    div.textContent += text.charAt(i);
-    scrollNarrativeBottom();
+    try {
+      div.textContent += text.charAt(i);
+      scrollNarrativeBottom();
+    } catch (_) {}
     await new Promise(r => setTimeout(r, 14 + Math.random()*8));
   }
 }
